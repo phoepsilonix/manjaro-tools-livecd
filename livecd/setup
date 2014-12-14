@@ -19,7 +19,7 @@ load_config "/opt/livecd/manjaro-tools.conf"
 [[ -r /opt/livecd/util-mnt.sh ]] && source /opt/livecd/util-mnt.sh
 [[ -r /opt/livecd/util-inst.sh ]] && source /opt/livecd/util-inst.sh
 [[ -r /opt/livecd/util-lng.sh ]] && source /opt/livecd/util-lng.sh
-[[ -r /opt/livecd/util-common.sh ]] && source /opt/livecd/util-common.sh
+[[ -r /opt/livecd/util-livecd.sh ]] && source /opt/livecd/util-livecd.sh
 
 # check if we have a internet connection
 ping_check=$(LC_ALL=C ping -c 1 www.manjaro.org | grep "1 received")

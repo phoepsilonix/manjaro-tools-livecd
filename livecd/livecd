@@ -4,7 +4,6 @@
 
 load_config "/opt/livecd/manjaro-tools.conf"  
 
-[[ -r /opt/livecd/util-common.sh ]] && source /opt/livecd/util-common.sh
 [[ -r /opt/livecd/util-lng.sh ]] && source /opt/livecd/util-lng.sh
 [[ -r /opt/livecd/util-livecd.sh ]] && source /opt/livecd/util-livecd.sh
 
@@ -94,10 +93,6 @@ if [ -e "/usr/bin/gnome-keyring-daemon" ] ; then
    setcap cap_ipc_lock=ep /usr/bin/gnome-keyring-daemon &> /dev/null
 fi
 
-echo "configure user" >> /tmp/livecd.log
-
-useradd -m -g users -G ${addgroups} -p $(gen_pw) ${username}
-
 # do_configsforroot
 cp -a /etc/skel/. /root/
 
@@ -109,27 +104,7 @@ cp -a /etc/skel/. /root/
 setcap cap_net_raw=ep /usr/bin/ping &> /dev/null
 setcap cap_net_raw=ep /usr/bin/ping6 &> /dev/null
 
-# installing localization packages
-if [ -e "/bootmnt/${install_dir}/${arch}/lng-image.sqfs" ] ; then
-   echo "install translation packages" >> /tmp/livecd.log
-   _configure_translation_pkgs
-   ${PACMAN_LNG} -Sy
-   if [ -e "/bootmnt/${install_dir}/${arch}/kde-image.sqfs" ] ; then
-      ${PACMAN_LNG} -S ${KDE_LNG_INST} &> /dev/null
-   fi
-   if [ -e "/usr/bin/firefox" ] ; then
-      ${PACMAN_LNG} -S ${FIREFOX_LNG_INST} &> /dev/null
-   fi
-   if [ -e "/usr/bin/thunderbird" ] ; then
-      ${PACMAN_LNG} -S ${THUNDER_LNG_INST} &> /dev/null
-   fi
-   if [ -e "/usr/bin/libreoffice" ] ; then
-      ${PACMAN_LNG} -S ${LIBRE_LNG_INST} &> /dev/null
-   fi
-   if [ -e "/usr/bin/hunspell" ] ; then
-      ${PACMAN_LNG} -S ${HUNSPELL_LNG_INST} &> /dev/null
-   fi
-fi
+install_localization
 
 # set unique machine-id
 #dbus-uuidgen --ensure=/etc/machine-id
