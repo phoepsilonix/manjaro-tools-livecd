@@ -9,7 +9,7 @@ depend() {
 
 start() {
 	ebegin "Running livecd script"
-	/usr/bin/pacman-boot  &> /dev/null
+	/usr/bin/pacman-boot  # &> /dev/null
 	eend $?
 }
  

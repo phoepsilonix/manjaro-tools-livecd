@@ -3,16 +3,16 @@
 # Distributed under the terms of the GNU General Public License v2
 
 description="Manjaro livecd mhwd script"
-command="/opt/livecd/mhwd"
+#command="/opt/livecd/mhwd"
 
 depend() {
     need livecd
     before xdm
 }
 
-# start() {
-# 	ebegin "Running mhwd script"
-# 	# run the mhwd script
-# 	/opt/livecd/mhwd &> /dev/null
-# 	eend $?
-# }
+start() {
+	ebegin "Running mhwd script"
+	# run the mhwd script
+	/opt/livecd/mhwd &> /dev/null
+	eend $?
+}
