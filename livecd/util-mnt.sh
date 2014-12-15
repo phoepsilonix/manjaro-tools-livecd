@@ -3,8 +3,7 @@
 # chroot_mount()
 # prepares target system as a chroot
 #
-chroot_mount()
-{
+chroot_mount(){
     [[ -e "${DESTDIR}/sys" ]] || mkdir -m 555 "${DESTDIR}/sys"
     [[ -e "${DESTDIR}/proc" ]] || mkdir -m 555 "${DESTDIR}/proc"
     [[ -e "${DESTDIR}/dev" ]] || mkdir "${DESTDIR}/dev"
@@ -18,8 +17,7 @@ chroot_mount()
 # chroot_umount()
 # tears down chroot in target system
 #
-chroot_umount()
-{
+chroot_umount(){
     umount "${DESTDIR}/proc"
     umount "${DESTDIR}/sys"
     umount "${DESTDIR}/dev"
@@ -29,8 +27,7 @@ chroot_umount()
 #
 # parameters: device file
 # outputs:    disc capacity in bytes
-_getdisccapacity()
-{
+_getdisccapacity(){
  echo $(fdisk -l $1 | grep $1: | cut -d" " -f5)
 }
 
@@ -38,16 +35,14 @@ _getdisccapacity()
 # will print the disks as follows, getting size info from _getdisccapacity():
 #   /dev/sda: 625000 MiB (610 GiB)
 #   /dev/sdb: 476940 MiB (465 GiB)
-_getavaildisks()
-{
+_getavaildisks(){
     for DISC in $(finddisks); do
         DISC_SIZE=$(_getdisccapacity $DISC)
         echo "$DISC: $((DISC_SIZE / 2**20)) MiB ($((DISC_SIZE / 2**30)) GiB)\n"
     done
 }
 
-getfstype()
-{
+getfstype(){
     echo "$(${_BLKID} -p -i -s TYPE -o value ${1})"
 }
 
@@ -58,8 +53,7 @@ getfstype()
 # outputs:    FSUUID on success
 #             nothing on failure
 # returns:    nothing
-getfsuuid()
-{
+getfsuuid(){
     echo "$(${_BLKID} -p -i -s UUID -o value ${1})"
 }
 
@@ -70,8 +64,7 @@ getfsuuid()
 # outputs:    UUID on success
 #             nothing on failure
 # returns:    nothing
-getuuid()
-{
+getuuid(){
     if [ -n "$(echo ${1} |grep -E '[shv]d[a-z]+[0-9]+$|mmcblk[0-9]+p[0-9]+$')" ]; then
         echo "$(blkid -s UUID -o value ${1})"
     fi
@@ -81,17 +74,14 @@ getuuid()
 # outputs:    LABEL on success
 #             nothing on failure
 # returns:    nothing
-getfslabel()
-{
+getfslabel(){
     echo "$(${_BLKID} -p -i -s LABEL -o value ${1})"
 }
 
-getpartuuid()
-{
+getpartuuid(){
     echo "$(${_BLKID} -p -i -s PART_ENTRY_UUID -o value ${1})"
 }
 
-getpartlabel()
-{
+getpartlabel(){
     echo "$(${_BLKID} -p -i -s PART_ENTRY_NAME -o value ${1})"
 }

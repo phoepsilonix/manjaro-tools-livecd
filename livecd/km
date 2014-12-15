@@ -3,8 +3,7 @@
 # adapted for Cinnarch by Alex Filgueira <faidoc@gmail.com>
 # adapted for Manjaro by Philip Müller <philm@manjaro.org>
 
-abort()
-{
+abort(){
     DIALOG --yesno "${_abort}" 6 42 || return 0
     [[ -e /tmp/.km ]] && rm -f /tmp/.km
     [[ -e /tmp/.keymap ]] && rm -f /tmp/.keymap
@@ -32,17 +31,16 @@ abort()
 #
 # parameters: see dialog(1)
 # returns: whatever dialog did
-DIALOG() {
+DIALOG(){
     dialog --backtitle "${TITLE}" --aspect 15 "$@"
     return $?
 }
 
-error_kmset()
-{
+error_kmset(){
     DIALOG --msgbox "${_error}" 0 0
 }
 
-dokeymap() {
+dokeymap(){
     echo "${_scanning}"
     KEYMAPS=
     for i in $(find ${BASEDIR}/keymaps -follow -name "*.gz" | sed 's|^.*/||g' | sort); do
@@ -87,7 +85,7 @@ S_NEXTITEM=2
 }
 
 
-mainmenu() {
+mainmenu(){
     if [[ -n "${S_NEXTITEM}" ]]; then
         DEFAULT="--default-item ${S_NEXTITEM}"
     else

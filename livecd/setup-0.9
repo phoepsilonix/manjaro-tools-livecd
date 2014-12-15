@@ -73,8 +73,7 @@ NEXTITEM=""
 
 # activate_dmraid()
 # activate dmraid devices
-activate_dmraid()
-{
+activate_dmraid(){
     if [[ -e /usr/bin/dmraid ]]; then
         DIALOG --infobox "${_activate_dmraid}" 0 0
         /usr/bin/dmraid -ay -I -Z >/dev/null 2>&1
@@ -83,8 +82,7 @@ activate_dmraid()
 
 # activate_lvm2
 # activate lvm2 devices
-activate_lvm2()
-{
+activate_lvm2(){
     ACTIVATE_LVM2=""
     if [[ -e /usr/bin/lvm ]]; then
         OLD_LVM2_GROUPS=${LVM2_GROUPS}
@@ -103,8 +101,7 @@ activate_lvm2()
 
 # activate_raid
 # activate md devices
-activate_raid()
-{
+activate_raid(){
     ACTIVATE_RAID=""
     if [[ -e /usr/bin/mdadm ]]; then
         DIALOG --infobox "${_activate_raid}" 0 0
@@ -116,8 +113,7 @@ activate_raid()
 
 # activate_luks
 # activate luks devices
-activate_luks()
-{
+activate_luks(){
     ACTIVATE_LUKS=""
     if [[ -e /usr/bin/cryptsetup ]]; then
         DIALOG --infobox "${_scanning_luks}" 0 0
@@ -149,8 +145,7 @@ activate_luks()
 # activate special devices:
 # activate dmraid, lvm2 and raid devices, if not already activated during bootup!
 # run it more times if needed, it can be hidden by each other!
-activate_special_devices()
-{
+activate_special_devices(){
     ACTIVATE_RAID=""
     ACTIVATE_LUKS=""
     ACTIVATE_LVM2=""
@@ -178,7 +173,7 @@ destdir_mounts(){
 }
 
 # lists default linux blockdevices
-default_blockdevices() {
+default_blockdevices(){
     # ide devices
     for dev in $(ls ${block} 2>/dev/null | egrep '^hd'); do
         if [[ "$(cat ${block}/${dev}/device/media)" = "disk" ]]; then
@@ -206,7 +201,7 @@ default_blockdevices() {
 }
 
 # lists additional linux blockdevices
-additional_blockdevices() {
+additional_blockdevices(){
     # Include additional controllers:
     # Mylex DAC960 PCI RAID controller, Compaq Next Generation Drive Array, 
     # Compaq Intelligent Drive Array
@@ -234,7 +229,7 @@ additional_blockdevices() {
 }
 
 # lists additional linux blockdevices partitions
-additional_blockdevices_partitions() {
+additional_blockdevices_partitions(){
     # Mylex DAC960 PCI RAID controller, Compaq Next Generation Drive Array, 
     # Compaq Intelligent Drive Array
     for k in ${EXTRA_CONTROLLER}; do
@@ -287,7 +282,7 @@ additional_blockdevices_partitions() {
 }
 
 # list none partitionable raid md devices
-raid_devices() {
+raid_devices(){
     for devpath in $(ls ${block} 2>/dev/null | egrep '^md'); do
         if ! [[ "$(ls ${block}/${devpath} 2>/dev/null | egrep ${devpath}p)" ]]; then 
             # exlude md partitions which are part of lvm or luks
@@ -300,7 +295,7 @@ raid_devices() {
 }
 
 # lists default linux partitionable raid devices
-partitionable_raid_devices() {
+partitionable_raid_devices(){
     for dev in $(ls ${block} 2>/dev/null | egrep '^md'); do
         for i in $(ls ${block}/${dev} 2>/dev/null | egrep "${dev}\!*p"); do 
             if [[ -d "${block}/${dev}/${i}" ]]; then 
@@ -313,7 +308,7 @@ partitionable_raid_devices() {
 }
 
 # lists default linux partitionable raid devices
-partitionable_raid_devices_partitions() {
+partitionable_raid_devices_partitions(){
     for dev in $(ls ${block} 2>/dev/null | egrep '^md'); do
         for i in $(ls ${block}/${dev} 2>/dev/null | egrep ${dev}p); do 
             if [[ -d "${block}/${dev}/${i}" ]]; then
@@ -328,7 +323,7 @@ partitionable_raid_devices_partitions() {
 }
 
 # lists default linux dmraid devices
-dmraid_devices() {
+dmraid_devices(){
     if [[ -d /dev/mapper ]]; then
         for fakeraid in $(dmraid -s -c); do
                 if [[ "$(echo ${fakeraid} | grep '_')" ]]; then
@@ -343,7 +338,7 @@ dmraid_devices() {
 # - remove part of encrypted devices
 # - remove part of lvm
 # - remove part ot raid
-check_dm_devices() {
+check_dm_devices(){
     for devpath in $(ls /dev/mapper 2>/dev/null | grep -v control); do
         k="$(${_BLKID} -p -i /dev/mapper/${devpath} 2>/dev/null | grep "TYPE=\"crypto_LUKS\"" | sed -e 's#:.*##g')"
         partofcrypt="${partofcrypt} ${k}"
@@ -360,7 +355,7 @@ check_dm_devices() {
 
 # dm_devices
 # - show device mapper devices 
-dm_devices() {
+dm_devices(){
     check_dm_devices
     for i in $(dmraid -s -c); do
         EXCLUDE_DMRAID=""
@@ -380,7 +375,7 @@ dm_devices() {
 
 # dmraid_partitions
 # - show dmraid partitions
-dmraid_partitions() {
+dmraid_partitions(){
     check_dm_devices
     if [[ -d /dev/mapper ]]; then
         for fakeraid in $(dmraid -s -c); do
@@ -398,7 +393,7 @@ dmraid_partitions() {
 }
 
 # do sanity checks on partitions, argument comes ${devpath} loop
-default_partition_check() {
+default_partition_check(){
         disk=$(basename ${devpath})
         for part in $(ls ${block}/${disk} 2>/dev/null | egrep -v ^${disk}p | egrep ^${disk}); do
             # exclude checks:
@@ -423,14 +418,14 @@ default_partition_check() {
         done
 }
 
-finddisks() {
+finddisks(){
     default_blockdevices ${1}
     additional_blockdevices ${1}
     dmraid_devices ${1}
     partitionable_raid_devices ${1}
 }
 
-findpartitions() {
+findpartitions(){
     for devpath in $(finddisks); do
         default_partition_check ${1}
     done
@@ -442,7 +437,7 @@ findpartitions() {
 }
 
 # don't check on raid devices!
-findbootloaderdisks() {
+findbootloaderdisks(){
     if ! [[ "${USE_DMRAID}" = "1" ]]; then
         default_blockdevices ${1}
         additional_blockdevices ${1}
@@ -452,7 +447,7 @@ findbootloaderdisks() {
 }
 
 # don't list raid devices, lvm2 and devicemapper!
-findbootloaderpartitions() {
+findbootloaderpartitions(){
     if ! [[ "${USE_DMRAID}" = "1" ]]; then
         for devpath in $(findbootloaderdisks); do
             default_partition_check ${1}
@@ -464,7 +459,7 @@ findbootloaderpartitions() {
 }
 
 # find any gpt/guid formatted disks
-find_gpt() {
+find_gpt(){
     GUID_DETECTED=""
     for i in $(finddisks); do
         [[ "$(${_BLKID} -p -i -o value -s PTTYPE ${i})" == "gpt" ]] && GUID_DETECTED="1"
@@ -472,7 +467,7 @@ find_gpt() {
 }
 
 # freeze and unfreeze xfs, as hack for grub(2) installing
-freeze_xfs() {
+freeze_xfs(){
     sync
     if [[ -x /usr/bin/xfs_freeze ]]; then
         if [[ "$(cat /proc/mounts | grep "${DESTDIR}/boot " | grep " xfs ")" ]]; then
@@ -486,7 +481,7 @@ freeze_xfs() {
     fi
 }
 
-mapdev() {
+mapdev(){
     partition_flag=0
     device_found=0
     # check if we use hd sd  or vd device
@@ -535,7 +530,7 @@ mapdev() {
 # prompts the user to choose an editor
 # sets EDITOR global variable
 #
-geteditor() {
+geteditor(){
     if ! [[ "${EDITOR}" ]]; then
         DIALOG --menu "${_geteditor}" 10 35 3 \
         "1" "${_nano}" \
@@ -548,7 +543,7 @@ geteditor() {
 }
 
 # set device name scheme
-set_device_name_scheme() {
+set_device_name_scheme(){
     NAME_SCHEME_PARAMETER=""
     NAME_SCHEME_LEVELS=""
     MENU_DESC_TEXT=""
@@ -571,7 +566,7 @@ set_device_name_scheme() {
 }
 
 # set GUID (gpt) usage
-set_guid() {
+set_guid(){
     ## Lenovo BIOS-GPT issues - Arch Forum - https://bbs.archlinux.org/viewtopic.php?id=131149 , https://bbs.archlinux.org/viewtopic.php?id=133330 , https://bbs.archlinux.org/viewtopic.php?id=138958
     ## Lenovo BIOS-GPT issues - in Fedora - https://bugzilla.redhat.com/show_bug.cgi?id=735733, https://bugzilla.redhat.com/show_bug.cgi?id=749325 , http://git.fedorahosted.org/git/?p=anaconda.git;a=commit;h=ae74cebff312327ce2d9b5ac3be5dbe22e791f09
     GUIDPARAMETER=""
@@ -582,8 +577,7 @@ set_guid() {
 # will print the mountpoints as follows, getting size info from /sys:
 #   /dev/sda: 64000 MB
 #   /dev/sdb: 64000 MB
-_getavaildisks()
-{
+_getavaildisks(){
     for i in $(finddisks); do
             if [[ "$(echo "${i}" | grep '/dev/mapper')" ]]; then
                 # device mapper is always 512 aligned!
@@ -606,8 +600,7 @@ _getavaildisks()
 # will print the mountpoints as follows, getting size info from /sys:
 #   /dev/sda1: 640 MB
 #   /dev/sdb2: 640 MB
-_getavailpartitions()
-{
+_getavailpartitions(){
     for i in $(findpartitions); do
         # mmc and raid partitions
         if [[ "$(echo "${i}" | grep '/dev/md_d[0-9]')"  ||  "$(echo "${i}" | grep '/dev/md[0-9]p')" || "$(echo "${i}" | grep '/dev/mmcblk')" ]]; then
@@ -642,8 +635,7 @@ _getavailpartitions()
 }
 
 # Disable all software raid devices
-_stopmd()
-{
+_stopmd(){
     if [[ "$(cat /proc/mdstat 2>/dev/null | grep ^md)" ]]; then
         DISABLEMD=""
         DIALOG --defaultno --yesno "${_stop_md}" 0 0 && DISABLEMD="1"
@@ -671,8 +663,7 @@ _stopmd()
 }
 
 # Disable all lvm devices
-_stoplvm()
-{
+_stoplvm(){
     DISABLELVM=""
     DETECTED_LVM=""
     LV_VOLUMES="$(lvs -o vg_name,lv_name --noheading --separator - 2>/dev/null)"
@@ -701,8 +692,7 @@ _stoplvm()
 }
 
 # Disable all luks encrypted devices
-_stopluks()
-{
+_stopluks(){
     DISABLELUKS=""
     DETECTED_LUKS=""
     LUKSDEVICE=""
@@ -745,8 +735,7 @@ _stopluks()
 }
 
 #_dmraid_update
-_dmraid_update()
-{
+_dmraid_update(){
     DIALOG --infobox "${_deactivateraid}" 0 0
     dmraid -an >/dev/null 2>&1
     if [[ "${DETECTED_LVM}" = "1" || "${DETECTED_LUKS}" = "1" ]]; then
@@ -764,14 +753,12 @@ _dmraid_update()
 }
 
 #helpbox for raid
-_helpraid()
-{
+_helpraid(){
 DIALOG --msgbox "${_help_raid}" 0 0
 }
 
 # Create raid or raid_partition
-_raid()
-{
+_raid(){
     MDFINISH=""
     while [[ "${MDFINISH}" != "DONE" ]]; do
         activate_special_devices
@@ -889,8 +876,7 @@ _raid()
 }
 
 # create raid device
-_createraid()
-{
+_createraid(){
     DEVICES="$(echo -n $(cat /tmp/.raid))"
     SPARES="$(echo -n $(cat /tmp/.raid-spare))"
     # combine both if spares are available, spares at the end!
@@ -929,14 +915,12 @@ _createraid()
 }
 
 # help for lvm
-_helplvm()
-{
+_helplvm(){
 DIALOG --msgbox "${_help_lvm}" 0 0
 }
 
 # Creates physical volume
-_createpv()
-{
+_createpv(){
     PVFINISH=""
     while [[ "${PVFINISH}" != "DONE" ]]; do
         activate_special_devices
@@ -1019,8 +1003,7 @@ _createpv()
 }
 
 #find physical volumes that are not in use
-findpv()
-{
+findpv(){
     for i in $(pvs -o pv_name --noheading);do
         if [[ "$(pvs -o vg_name --noheading ${i})" = "      " ]]; then
                 if [[ "$(echo ${i} | grep /dev/dm-)" ]]; then
@@ -1041,8 +1024,7 @@ findpv()
     done
 }
 
-getavailablepv()
-{
+getavailablepv(){
     for i in "$(pvs -o pv_name,pv_size --noheading --units m)"; do
             if [[ "$(echo ${i} | grep /dev/dm-)" ]]; then
                 for k in $(ls /dev/mapper | grep -v control); do
@@ -1060,8 +1042,7 @@ getavailablepv()
 }
 
 #find volume groups that are not already full in use
-findvg()
-{
+findvg(){
     for dev in $(vgs -o vg_name --noheading);do
         if ! [[ "$(vgs -o vg_free --noheading --units m ${dev} | grep " 0m$")" ]]; then
             echo "${dev}"
@@ -1070,8 +1051,7 @@ findvg()
     done
 }
 
-getavailablevg()
-{
+getavailablevg(){
     for i in $(vgs -o vg_name,vg_free --noheading --units m); do
         if ! [[ "$(echo ${i} | grep " 0m$")" ]]; then
             echo ${i} | sed -e 's#$#\\n#'
@@ -1080,8 +1060,7 @@ getavailablevg()
 }
 
 # Creates volume group
-_createvg()
-{
+_createvg(){
     VGFINISH=""
     while [[ "${VGFINISH}" != "DONE" ]]; do
         : >/tmp/.pvs
@@ -1132,8 +1111,7 @@ _createvg()
 }
 
 # Creates logical volume
-_createlv()
-{
+_createlv(){
     LVFINISH=""
     while [[ "${LVFINISH}" != "DONE" ]]; do
         LVDEVICE=""
@@ -1205,7 +1183,7 @@ _createlv()
 }
 
 # enter luks name
-_enter_luks_name() {
+_enter_luks_name(){
     LUKSDEVICE=""
     while [[ "${LUKSDEVICE}" = "" ]]; do
         DIALOG --inputbox "Enter the name for luks encrypted device ${PART}:\nfooname\n<yourname>\n\n" 15 65 "fooname" 2>${ANSWER} || return 1
@@ -1218,7 +1196,7 @@ _enter_luks_name() {
 }
 
 # enter luks passphrase
-_enter_luks_passphrase () {
+_enter_luks_passphrase (){
     LUKSPASSPHRASE=""
     while [[ "${LUKSPASSPHRASE}" = "" ]]; do
         DIALOG --insecure --passwordbox "Enter passphrase for luks encrypted device ${PART}:" 0 0 2>${ANSWER} || return 1
@@ -1236,7 +1214,7 @@ _enter_luks_passphrase () {
 }
 
 # opening luks
-_opening_luks() {
+_opening_luks(){
     DIALOG --infobox "Opening encrypted ${PART}..." 0 0
     luksOpen_success="0"
     while [[ "${luksOpen_success}" = "0" ]]; do
@@ -1251,14 +1229,12 @@ _opening_luks() {
 }
 
 # help for luks
-_helpluks()
-{
+_helpluks(){
 DIALOG --msgbox "${_help_luks}" 0 0
 }
 
 # create luks device
-_luks()
-{
+_luks(){
     NAME_SCHEME_PARAMETER_RUN=""
     LUKSFINISH=""
     while [[ "${LUKSFINISH}" != "DONE" ]]; do
@@ -1344,7 +1320,7 @@ _luks()
     _opening_luks
 }
 
-autoprepare() {
+autoprepare(){
     # check on encrypted devices, else weird things can happen!
     _stopluks
     # check on raid devices, else weird things can happen during partitioning!
@@ -1549,7 +1525,7 @@ autoprepare() {
     S_MKFSAUTO=1
 }
 
-check_gpt() {
+check_gpt(){
     GUID_DETECTED=""
     [[ "$(${_BLKID} -p -i -o value -s PTTYPE ${DISC})" == "gpt" ]] && GUID_DETECTED="1"
     
@@ -1578,7 +1554,7 @@ check_gpt() {
 }
 
 ## check and mount UEFI SYSTEM PARTITION at /boot/efi
-check_uefisyspart() {
+check_uefisyspart(){
     
     if [[ "$(${_BLKID} -p -i -o value -s PTTYPE ${DISC})" != "gpt" ]]; then
         DIALOG --msgbox "Setup detected no GUID (gpt) partition table on ${DISC}.\nUEFI boot requires ${DISC} to be partitioned as GPT.\nSetup will now try to non-destructively convert ${DISC} to GPT using sgdisk." 0 0
@@ -1637,7 +1613,7 @@ check_uefisyspart() {
     
 }
 
-partition() {
+partition(){
     # disable swap and all mounted partitions, umount / last!
     _umountall
     # check on encrypted devices, else weird things can happen!
@@ -1698,25 +1674,25 @@ partition() {
 }
 
 # scan and update btrfs devices
-btrfs_scan() {
+btrfs_scan(){
     btrfs device scan >/dev/null 2>&1
 }
 
 # mount btrfs for checks
-mount_btrfs() {
+mount_btrfs(){
     btrfs_scan
     BTRFSMP="$(mktemp -d /tmp/brtfsmp.XXXX)"
     mount ${PART} ${BTRFSMP}
 }
 
 # unmount btrfs after checks done
-umount_btrfs() {
+umount_btrfs(){
     umount ${BTRFSMP}
     rm -r ${BTRFSMP}
 }
 
 # Set BTRFS_DEVICES on detected btrfs devices
-find_btrfs_raid_devices() {
+find_btrfs_raid_devices(){
     btrfs_scan
     if [[ "${DETECT_CREATE_FILESYSTEM}" = "no" && "${FSTYPE}" = "btrfs" ]]; then
         for i in $(btrfs filesystem show ${PART} | cut -d " " -f 11); do
@@ -1725,7 +1701,7 @@ find_btrfs_raid_devices() {
     fi
 }
 
-find_btrfs_raid_bootloader_devices() {
+find_btrfs_raid_bootloader_devices(){
     btrfs_scan
     BTRFS_COUNT=1
     if [[ "$(${_BLKID} -p -i  ${bootdev} -o value -s TYPE)" = "btrfs" ]]; then
@@ -1738,7 +1714,7 @@ find_btrfs_raid_bootloader_devices() {
 }
 
 # find btrfs subvolume
-find_btrfs_subvolume() {
+find_btrfs_subvolume(){
     if [[ "${DETECT_CREATE_FILESYSTEM}" = "no" ]]; then
         # existing btrfs subvolumes
         mount_btrfs
@@ -1750,7 +1726,7 @@ find_btrfs_subvolume() {
     fi
 }
 
-find_btrfs_bootloader_subvolume() {
+find_btrfs_bootloader_subvolume(){
     BTRFS_SUBVOLUME_COUNT=1
     if [[ "$(${_BLKID} -p -i ${bootdev} -o value -s TYPE)" = "btrfs" ]]; then
         BTRFS_SUBVOLUMES=""
@@ -1765,7 +1741,7 @@ find_btrfs_bootloader_subvolume() {
 }
 
 # subvolumes already in use
-subvolumes_in_use() {
+subvolumes_in_use(){
     SUBVOLUME_IN_USE=""
     for i in $(grep ${PART}[:#] /tmp/.parts); do
         if [[ "$(echo ${i} | grep ":btrfs:")" ]]; then
@@ -1775,7 +1751,7 @@ subvolumes_in_use() {
 }
 
 # ask for btrfs compress option
-btrfs_compress() {
+btrfs_compress(){
     BTRFS_COMPRESS="NONE"
     BTRFS_COMPRESSLEVELS="lzo - zlib -"
     if [[ "${BTRFS_SUBVOLUME}" = "NONE" ]]; then
@@ -1790,7 +1766,7 @@ btrfs_compress() {
 }
 
 # ask for btrfs ssd option
-btrfs_ssd() {
+btrfs_ssd(){
     BTRFS_SSD="NONE"
     if [[ "${BTRFS_SUBVOLUME}" = "NONE" ]]; then
         DIALOG --defaultno --yesno "Would you like to optimize the data for ssd disk usage on ${PART}?" 0 0 && BTRFS_SSD="ssd"
@@ -1800,7 +1776,7 @@ btrfs_ssd() {
 }
 
 # values that are only needed for btrfs creation
-clear_btrfs_values() {
+clear_btrfs_values(){
     : >/tmp/.btrfs-devices
     LABEL_NAME=""
     FS_OPTIONS=""
@@ -1809,7 +1785,7 @@ clear_btrfs_values() {
 }
 
 # do not ask for btrfs filesystem creation, if already prepared for creation!
-check_btrfs_filesystem_creation() {
+check_btrfs_filesystem_creation(){
     DETECT_CREATE_FILESYSTEM="no"
     SKIP_FILESYSTEM="no"
     SKIP_ASK_SUBVOLUME="no"
@@ -1825,7 +1801,7 @@ check_btrfs_filesystem_creation() {
 }
 
 # remove devices with no subvolume from list and generate raid device list
-btrfs_parts() {
+btrfs_parts(){
      if [[ -s /tmp/.btrfs-devices ]]; then
          BTRFS_DEVICES=""
          for i in $(cat /tmp/.btrfs-devices); do
@@ -1839,7 +1815,7 @@ btrfs_parts() {
 }
 
 # choose raid level to use on btrfs device
-btrfs_raid_level() {
+btrfs_raid_level(){
     BTRFS_RAIDLEVELS="NONE - raid0 - raid1 - raid10 - single -"
     BTRFS_RAID_FINISH=""
     BTRFS_LEVEL=""
@@ -1860,7 +1836,7 @@ btrfs_raid_level() {
 }
 
 # select btrfs raid devices
-select_btrfs_raid_devices () {
+select_btrfs_raid_devices (){
     # show all devices with sizes
     # DIALOG --msgbox "DISKS:\n$(_getavaildisks)\n\nPARTITIONS:\n$(_getavailpartitions)" 0 0
     # select the second device to use, no missing option available!
@@ -1892,13 +1868,13 @@ select_btrfs_raid_devices () {
 }
 
 # prepare new btrfs device
-prepare_btrfs() {
+prepare_btrfs(){
     btrfs_raid_level || return 1
     prepare_btrfs_subvolume || return 1
 }
 
 # prepare btrfs subvolume
-prepare_btrfs_subvolume() {
+prepare_btrfs_subvolume(){
     DOSUBVOLUME="no"
     BTRFS_SUBVOLUME="NONE"
     if [[ "${SKIP_ASK_SUBVOLUME}" = "no" ]]; then
@@ -1940,7 +1916,7 @@ check_btrfs_subvolume(){
 }
 
 # create btrfs subvolume
-create_btrfs_subvolume() {
+create_btrfs_subvolume(){
     mount_btrfs
     btrfs subvolume create ${BTRFSMP}/${_btrfssubvolume} >${LOG}
     # change permission from 700 to 755 
@@ -1950,7 +1926,7 @@ create_btrfs_subvolume() {
 }
 
 # choose btrfs subvolume from list
-choose_btrfs_subvolume () {
+choose_btrfs_subvolume (){
     BTRFS_SUBVOLUME="NONE"
     SUBVOLUMES_DETECTED="no"
     SUBVOLUMES=$(find_btrfs_subvolume _)
@@ -1973,7 +1949,7 @@ choose_btrfs_subvolume () {
 }
 
 # boot on btrfs subvolume is not supported
-check_btrfs_boot_subvolume() {
+check_btrfs_boot_subvolume(){
     if [[ "${MP}" = "/boot" && "${FSTYPE}" = "btrfs" && ! "${BTRFS_SUBVOLUME}" = "NONE" ]]; then
         DIALOG --msgbox "ERROR: \n/boot on a btrfs subvolume is not supported by any bootloader yet!" 8 65
         FILESYSTEM_FINISH="no"
@@ -1981,7 +1957,7 @@ check_btrfs_boot_subvolume() {
 }
 
 # btrfs subvolume menu
-btrfs_subvolume() {
+btrfs_subvolume(){
     FILESYSTEM_FINISH=""
     if [[ "${FSTYPE}" = "btrfs" && "${DOMKFS}" = "no" ]]; then
         if [[ "${ASK_MOUNTPOINTS}" = "1" ]]; then
@@ -2001,7 +1977,7 @@ btrfs_subvolume() {
     FILESYSTEM_FINISH="yes"
 }
 
-select_filesystem() {
+select_filesystem(){
     FILESYSTEM_FINISH=""
     # don't allow vfat as / filesystem, it will not work!
     # don't allow ntfs as / filesystem, this is stupid!
@@ -2020,7 +1996,7 @@ select_filesystem() {
     FSTYPE=$(cat ${ANSWER})
 }
 
-enter_mountpoint() {
+enter_mountpoint(){
     FILESYSTEM_FINISH=""
     MP=""
     while [[ "${MP}" = "" ]]; do
@@ -2034,7 +2010,7 @@ enter_mountpoint() {
 }
 
 # set sane values for paramaters, if not already set
-check_mkfs_values() {
+check_mkfs_values(){
     # Set values, to not confuse mkfs call!
     [[ "${FS_OPTIONS}" = "" ]] && FS_OPTIONS="NONE"
     [[ "${BTRFS_DEVICES}" = "" ]] && BTRFS_DEVICES="NONE"
@@ -2045,7 +2021,7 @@ check_mkfs_values() {
     [[ "${LABEL_NAME}" = "" ]] && LABEL_NAME="NONE"
 }
 
-create_filesystem() {
+create_filesystem(){
     FILESYSTEM_FINISH=""
     LABEL_NAME=""
     FS_OPTIONS=""
@@ -2073,7 +2049,7 @@ create_filesystem() {
     FILESYSTEM_FINISH="yes"
 }
 
-mountpoints() {
+mountpoints(){
     NAME_SCHEME_PARAMETER_RUN=""
     while [[ "${PARTFINISH}" != "DONE" ]]; do
         activate_special_devices
@@ -2220,7 +2196,7 @@ mountpoints() {
 #  mountpoint: Mount point inside the destination system, e.g. '/boot'
 
 # returns: 1 on failure
-_mkfs() {
+_mkfs(){
     local _domk=${1}
     local _device=${2}
     local _fstype=${3}
@@ -2400,25 +2376,25 @@ auto_mdadm()
     fi
 }
 
-getrootfstype() {
+getrootfstype(){
     ROOTFS="$(getfstype ${PART_ROOT})"
 }
 
-getrootflags() {
+getrootflags(){
     # remove rw for all filesystems and gcpid for nilfs2
     ROOTFLAGS=""
     ROOTFLAGS="$(findmnt -m -n -o options -T ${DESTDIR} | sed -e 's/^rw//g' -e 's/,gcpid=.*[0-9]//g')"
     [[ -n "${ROOTFLAGS}" ]] && ROOTFLAGS="rootflags=${ROOTFLAGS}"
 }
 
-getraidarrays() {
+getraidarrays(){
     RAIDARRAYS=""
     if ! [[ "$(grep ^ARRAY ${DESTDIR}/etc/mdadm.conf)" ]]; then
         RAIDARRAYS="$(echo -n $(cat /proc/mdstat 2>/dev/null | grep ^md | sed -e 's#\[[0-9]\]##g' -e 's# :.* raid[0-9]##g' -e 's#md#md=#g' -e 's# #,/dev/#g' -e 's#_##g'))"
     fi
 }
 
-getcryptsetup() {
+getcryptsetup(){
     CRYPTSETUP=""
     if ! [[ "$(cryptsetup status $(basename ${PART_ROOT}) | grep inactive)" ]]; then
         #avoid clash with dmraid here
@@ -2436,7 +2412,7 @@ getcryptsetup() {
     fi
 }
 
-getrootpartuuid() {
+getrootpartuuid(){
     _rootpart="${PART_ROOT}"
     _partuuid="$(getpartuuid ${PART_ROOT})"
     if [[ -n "${_partuuid}" ]]; then
@@ -2444,7 +2420,7 @@ getrootpartuuid() {
     fi
 }
 
-getrootpartlabel() {
+getrootpartlabel(){
     _rootpart="${PART_ROOT}"
     _partlabel="$(getpartlabel ${PART_ROOT})"
     if [[ -n "${_partlabel}" ]]; then
@@ -2452,7 +2428,7 @@ getrootpartlabel() {
     fi
 }
 
-getrootfsuuid() {
+getrootfsuuid(){
     _rootpart="${PART_ROOT}"
     _fsuuid="$(getfsuuid ${PART_ROOT})"
     if [[ -n "${_fsuuid}" ]]; then
@@ -2460,7 +2436,7 @@ getrootfsuuid() {
     fi
 }
 
-getrootfslabel() {
+getrootfslabel(){
     _rootpart="${PART_ROOT}"
     _fslabel="$(getfslabel ${PART_ROOT})"
     if [[ -n "${_fslabel}" ]]; then
@@ -2469,7 +2445,7 @@ getrootfslabel() {
 }
 
 # basic checks needed for all bootloaders
-common_bootloader_checks() {
+common_bootloader_checks(){
     activate_special_devices
     getrootfstype
     getraidarrays
@@ -2486,7 +2462,7 @@ common_bootloader_checks() {
 }
 
 # look for a separately-mounted /boot partition
-check_bootpart() {
+check_bootpart(){
     subdir=""
     bootdev="$(mount | grep "${DESTDIR}/boot " | cut -d' ' -f 1)"
     if [[ "${bootdev}" == "" ]]; then
@@ -2496,7 +2472,7 @@ check_bootpart() {
 }
 
 # check for btrfs bootpart and abort if detected
-abort_btrfs_bootpart() {
+abort_btrfs_bootpart(){
         FSTYPE="$(${_BLKID} -p -i ${bootdev} -o value -s TYPE)"
         if [[ "${FSTYPE}" = "btrfs" ]]; then
             DIALOG --msgbox "Error:\nYour selected bootloader cannot boot from btrfs partition with /boot on it." 0 0
@@ -2505,7 +2481,7 @@ abort_btrfs_bootpart() {
 }
 
 # check for nilfs2 bootpart and abort if detected
-abort_nilfs_bootpart() {
+abort_nilfs_bootpart(){
         FSTYPE="$(${_BLKID} -p -i ${bootdev} -o value -s TYPE)"
         if [[ "${FSTYPE}" = "nilfs2" ]]; then
             DIALOG --msgbox "Error:\nYour selected bootloader cannot boot from nilfs2 partition with /boot on it." 0 0
@@ -2513,7 +2489,7 @@ abort_nilfs_bootpart() {
         fi
 }
 
-do_uefi_common() {
+do_uefi_common(){
     
     DISC="$(df -T "${DESTDIR}/boot" | tail -n +2 | awk '{print $1}' | sed 's/\(.\{8\}\).*/\1/')"
     
@@ -2527,7 +2503,7 @@ do_uefi_common() {
     
 }
 
-do_uefi_x86_64() {
+do_uefi_x86_64(){
     
     export _UEFI_ARCH="x86_64"
     export _SPEC_UEFI_ARCH="x64"
@@ -2536,7 +2512,7 @@ do_uefi_x86_64() {
     
 }
 
-do_uefi_i386() {
+do_uefi_i386(){
     
     export _UEFI_ARCH="i386"
     export _SPEC_UEFI_ARCH="ia32"
@@ -2545,7 +2521,7 @@ do_uefi_i386() {
     
 }
 
-do_uefi_efibootmgr() {
+do_uefi_efibootmgr(){
     
     modprobe -q efivars
     
@@ -2586,7 +2562,7 @@ EFIBEOF
     
 }
 
-do_apple_efi_hfs_bless() {
+do_apple_efi_hfs_bless(){
     
     modprobe -q -r efivars || true
     
@@ -2596,7 +2572,7 @@ do_apple_efi_hfs_bless() {
     
 }
 
-do_uefi_bootmgr_setup() {
+do_uefi_bootmgr_setup(){
     
     _uefisysdev="$(df -T "${DESTDIR}/boot/efi" | tail -n +2 | awk '{print $1}')"
     _DISC="$(echo "${_uefisysdev}" | sed 's/\(.\{8\}\).*/\1/')"
@@ -2625,7 +2601,7 @@ do_uefi_bootmgr_setup() {
     
 }
 
-doefistub_uefi_common() {
+doefistub_uefi_common(){
     
     [[ "$(uname -m)" == "x86_64" ]] && __CARCH="x86_64"
     [[ "$(uname -m)" == "i686" ]] && __CARCH="i386"
@@ -2793,7 +2769,7 @@ CONFEOF
     
 }
 
-do_efistub_uefi_x86_64() {
+do_efistub_uefi_x86_64(){
     
     do_uefi_x86_64
     
@@ -2801,7 +2777,7 @@ do_efistub_uefi_x86_64() {
     
 }
 
-do_efistub_uefi_i686() {
+do_efistub_uefi_i686(){
     
     do_uefi_i386
     
@@ -2809,7 +2785,7 @@ do_efistub_uefi_i686() {
     
 }
 
-dogummiboot_uefi_common() {
+dogummiboot_uefi_common(){
     
     DIALOG --msgbox "Setting up gummiboot-efi now ..." 0 0
     
@@ -2890,7 +2866,7 @@ GUMEOF
     
 }
 
-dorefind_uefi_common() {
+dorefind_uefi_common(){
     
     DIALOG --msgbox "Setting up refind-efi now ..." 0 0
     
@@ -2975,13 +2951,13 @@ REFINDEOF
 }
 
 # install syslinux and run preparation
-prepare_syslinux() {
+prepare_syslinux(){
     USE_DMRAID=""
     common_bootloader_checks
 }
 
 # common syslinux funtion
-common_syslinux() {
+common_syslinux(){
     DEVS="$(findbootloaderdisks _)"
     DEVS="${DEVS} $(findbootloaderpartitions _)"
     
@@ -3084,7 +3060,7 @@ EOF
 }
 
 # finish_syslinux
-finish_syslinux () {
+finish_syslinux (){
     MBR="${DESTDIR}/usr/lib/syslinux/mbr.bin"
     GPTMBR="${DESTDIR}/usr/lib/syslinux/gptmbr.bin"
     
@@ -3116,7 +3092,7 @@ finish_syslinux () {
 }
 
 # install extlinux bootloader
-dosyslinux_bios () {
+dosyslinux_bios (){
     bootdev=""
     SYSLINUX_PACKAGES="syslinux"
     SYSLINUX=EXTLINUX
@@ -3172,7 +3148,7 @@ dosyslinux_bios () {
     finish_syslinux
 }
 
-dogrub_common_before() {
+dogrub_common_before(){
     ##### Check whether the below limitations still continue with ver 2.00~beta4
     ### Grub(2) restrictions:
     # - Encryption is not recommended for grub(2) /boot!
@@ -3190,7 +3166,7 @@ dogrub_common_before() {
     fi
 }
 
-dogrub_config() {
+dogrub_config(){
 
     ########
     
@@ -3504,7 +3480,7 @@ EOF
     
 }
 
-dogrub_bios() {
+dogrub_bios(){
     
     dogrub_common_before
     
@@ -3634,7 +3610,7 @@ dogrub_bios() {
     
 }
 
-dogrub_uefi_common() {
+dogrub_uefi_common(){
     
     dogrub_common_before
     
@@ -3749,7 +3725,7 @@ EOF
     
 }
 
-dogrub_uefi_x86_64() {
+dogrub_uefi_x86_64(){
     
     do_uefi_x86_64
     
@@ -3757,7 +3733,7 @@ dogrub_uefi_x86_64() {
     
 }
 
-dogrub_uefi_i386() {
+dogrub_uefi_i386(){
     
     do_uefi_i386
     
@@ -3765,7 +3741,7 @@ dogrub_uefi_i386() {
     
 }
 
-prepare_harddrive() {
+prepare_harddrive(){
     S_MKFSAUTO=0
     S_MKFS=0
     DONE=0
@@ -3816,7 +3792,7 @@ prepare_harddrive() {
 }
 
 # menu for raid, lvm and encrypt
-create_special() {
+create_special(){
     NEXTITEM=""
     SPECIALDONE=0
     while [[ "${SPECIALDONE}" = "0" ]]; do
@@ -3851,7 +3827,7 @@ create_special() {
 }
 
 # menu for md creation
-_createmd() {
+_createmd(){
     NEXTITEM=""
     MDDONE=0
     while [[ "${MDDONE}" = "0" ]]; do
@@ -3891,7 +3867,7 @@ _createmd() {
 }
 
 # menu for lvm creation
-_createlvm() {
+_createlvm(){
     NEXTITEM=""
     LVMDONE=0
     while [[ "${LVMDONE}" = "0" ]]; do
@@ -3932,7 +3908,7 @@ _createlvm() {
 }
 
 # menu for luks creation
-_createluks() {
+_createluks(){
     NEXTITEM=""
     LUKSDONE=0
     while [[ "${LUKSDONE}" = "0" ]]; do
@@ -3966,7 +3942,7 @@ _createluks() {
     fi
 }
 
-install_bootloader_uefi_x86_64() {
+install_bootloader_uefi_x86_64(){
     
     DIALOG --menu "Which x86_64 UEFI bootloader would you like to use?" 13 55 2 \
         "GRUB_UEFI_x86_64" "GRUB(2) x86_64 UEFI" \
@@ -3978,7 +3954,7 @@ install_bootloader_uefi_x86_64() {
     
 }
 
-install_bootloader_uefi_i386() {
+install_bootloader_uefi_i386(){
     
     DIALOG --menu "Which i386 UEFI bootloader would you like to use?" 13 55 2 \
         "GRUB_UEFI_i386" "GRUB(2) i386 UEFI" \
@@ -3990,7 +3966,7 @@ install_bootloader_uefi_i386() {
     
 }
 
-install_bootloader_bios() {
+install_bootloader_bios(){
     
     DIALOG --menu "Which BIOS bootloader would you like to use?" 11 50 4 \
         "GRUB_BIOS" "GRUB(2) BIOS" \
@@ -4002,7 +3978,7 @@ install_bootloader_bios() {
     
 }
 
-install_bootloader() {
+install_bootloader(){
     
     destdir_mounts || return 1
     if [[ "${NAME_SCHEME_PARAMETER_RUN}" == "" ]]; then
@@ -4023,7 +3999,7 @@ install_bootloader() {
     fi
 }
 
-install_bootloader_menu() {
+install_bootloader_menu(){
     
     DIALOG --menu "What is your boot system type?" 10 40 3 \
         "BIOS" "BIOS" \
@@ -4042,8 +4018,7 @@ install_bootloader_menu() {
     fi
 }
 
-configure_system()
-{
+configure_system(){
     ## PREPROCESSING ##
     # only done on first invocation of configure_system
     if [ $S_PRECONFIG -eq 0 ]; then
@@ -4117,8 +4092,7 @@ configure_system()
     fi
 }
 
-mainmenu()
-{
+mainmenu(){
     if [ -n "${NEXTITEM}" ]; then
         DEFAULT="--default-item ${NEXTITEM}"
     else

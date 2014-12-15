@@ -1,56 +1,58 @@
 #!/bin/bash
 
 # Configure Desktop image
-if [ -e "/bootmnt/${install_dir}/${arch}/xfce-image.sqfs" ] ; then
-   DESKTOP="XFCE"
-   DESKTOP_IMG="xfce-image"
-fi
-if [ -e "/bootmnt/${install_dir}/${arch}/openbox-image.sqfs" ] ; then
-   DESKTOP="OPENBOX"
-   DESKTOP_IMG="openbox-image"
-fi
-if [ -e "/bootmnt/${install_dir}/${arch}/net-image.sqfs" ] ; then
-   DESKTOP="NET"
-   DESKTOP_IMG="net-image"
-fi
-if [ -e "/bootmnt/${install_dir}/${arch}/gnome-image.sqfs" ] ; then
-   DESKTOP="GNOME"
-   DESKTOP_IMG="gnome-image"
-fi
-if [ -e "/bootmnt/${install_dir}/${arch}/cinnamon-image.sqfs" ] ; then
-   DESKTOP="CINNAMON"
-   DESKTOP_IMG="cinnamon-image"
-fi
-if [ -e "/bootmnt/${install_dir}/${arch}/mate-image.sqfs" ] ; then
-   DESKTOP="MATE"
-   DESKTOP_IMG="mate-image"
-fi
-if [ -e "/bootmnt/${install_dir}/${arch}/kde-image.sqfs" ] ; then
-   DESKTOP="KDE"
-   DESKTOP_IMG="kde-image"
-fi
-if [ -e "/bootmnt/${install_dir}/${arch}/lxde-image.sqfs" ] ; then
-   DESKTOP="LXDE"
-   DESKTOP_IMG="lxde-image"
-fi
-if [ -e "/bootmnt/${install_dir}/${arch}/lxqt-image.sqfs" ] ; then
-   DESKTOP="LXQt"
-   DESKTOP_IMG="lxqt-image"
-fi
-if [ -e "/bootmnt/${install_dir}/${arch}/enlightenment-image.sqfs" ] ; then
-   DESKTOP="ENLIGHTENMENT"
-   DESKTOP_IMG="enlightenment-image"
-fi
-if [ -e "/bootmnt/${install_dir}/${arch}/pekwm-image.sqfs" ] ; then
-   DESKTOP="PekWM"
-   DESKTOP_IMG="pekwm-image"
-fi
-if [ -e "/bootmnt/${install_dir}/${arch}/custom-image.sqfs" ] ; then
-   DESKTOP="CUSTOM"
-   DESKTOP_IMG="custom-image"
-fi
+configure_DE_image(){
+    if [ -e "/bootmnt/${install_dir}/${arch}/xfce-image.sqfs" ] ; then
+      DESKTOP="XFCE"
+      DESKTOP_IMG="xfce-image"
+    fi
+    if [ -e "/bootmnt/${install_dir}/${arch}/openbox-image.sqfs" ] ; then
+      DESKTOP="OPENBOX"
+      DESKTOP_IMG="openbox-image"
+    fi
+    if [ -e "/bootmnt/${install_dir}/${arch}/net-image.sqfs" ] ; then
+      DESKTOP="NET"
+      DESKTOP_IMG="net-image"
+    fi
+    if [ -e "/bootmnt/${install_dir}/${arch}/gnome-image.sqfs" ] ; then
+      DESKTOP="GNOME"
+      DESKTOP_IMG="gnome-image"
+    fi
+    if [ -e "/bootmnt/${install_dir}/${arch}/cinnamon-image.sqfs" ] ; then
+      DESKTOP="CINNAMON"
+      DESKTOP_IMG="cinnamon-image"
+    fi
+    if [ -e "/bootmnt/${install_dir}/${arch}/mate-image.sqfs" ] ; then
+      DESKTOP="MATE"
+      DESKTOP_IMG="mate-image"
+    fi
+    if [ -e "/bootmnt/${install_dir}/${arch}/kde-image.sqfs" ] ; then
+      DESKTOP="KDE"
+      DESKTOP_IMG="kde-image"
+    fi
+    if [ -e "/bootmnt/${install_dir}/${arch}/lxde-image.sqfs" ] ; then
+      DESKTOP="LXDE"
+      DESKTOP_IMG="lxde-image"
+    fi
+    if [ -e "/bootmnt/${install_dir}/${arch}/lxqt-image.sqfs" ] ; then
+      DESKTOP="LXQt"
+      DESKTOP_IMG="lxqt-image"
+    fi
+    if [ -e "/bootmnt/${install_dir}/${arch}/enlightenment-image.sqfs" ] ; then
+      DESKTOP="ENLIGHTENMENT"
+      DESKTOP_IMG="enlightenment-image"
+    fi
+    if [ -e "/bootmnt/${install_dir}/${arch}/pekwm-image.sqfs" ] ; then
+      DESKTOP="PekWM"
+      DESKTOP_IMG="pekwm-image"
+    fi
+    if [ -e "/bootmnt/${install_dir}/${arch}/custom-image.sqfs" ] ; then
+      DESKTOP="CUSTOM"
+      DESKTOP_IMG="custom-image"
+    fi
+}
 
-DIALOG() {
+DIALOG(){
    # parameters: see dialog(1)
    # returns: whatever dialog did
    dialog --backtitle "$TITLE" --aspect 15 --yes-label "$_yes" --no-label "$_no" --cancel-label "$_cancel" "$@"
@@ -226,8 +228,7 @@ set_dm_chroot(){
     fi
 }
 
-hd_config()
-{
+hd_config(){
     # initialize special directories
     rm -v -rf ${DESTDIR}/sys ${DESTDIR}/proc ${DESTDIR}/dev &>/dev/null
     mkdir -p -v -m 1777 ${DESTDIR}/tmp &>/dev/null
@@ -276,7 +277,9 @@ hd_config()
     DIALOG --infobox "${_setupalsa}"  6 40
     sleep 3
     # configure alsa
-    set_alsa
+    #set_alsa
+    configure_alsa_live
+    
     # configure pulse
     chroot ${DESTDIR} pulseaudio-ctl normal
     # save settings
@@ -358,6 +361,7 @@ hd_config()
     DIALOG --infobox "${_setupdisplaymanager}" 6 40
     sleep 3
 
+    #set_dm_chroot
     set_dm_chroot
 
     # fix some apps
@@ -416,8 +420,7 @@ hd_config()
     chroot_umount
 }
 
-set_passwd()
-{
+set_passwd(){
     # trap tmp-file for passwd
     trap "rm -f ${ANSWER}" 0 1 2 5 15
  
@@ -444,8 +447,7 @@ set_passwd()
 # run_unsquashfs()
 # runs unsquashfs on the target system, displays output
 #
-run_unsquashfs()
-{
+run_unsquashfs(){
     # all unsquashfs output goes to /tmp/unsquashfs.log, which we tail
     # into a dialog
     ( \
@@ -477,16 +479,14 @@ run_unsquashfs()
 
 # run_mount_sqf()
 # runs mount on SQF_FILE
-run_mount_sqf()
-{
+run_mount_sqf(){
     # mount SQF_FILE to CP_SOURCE
     mount /bootmnt/${install_dir}/${arch}/${SQF_FILE} ${CP_SOURCE} -t squashfs -o loop
 }
 
 # run_umount_sqf()
 # runs umount on SQF_FILE
-run_umount_sqf()
-{
+run_umount_sqf(){
     # umount SQF_FILE from CP_SOURCE
     umount ${CP_SOURCE}
 }
@@ -494,8 +494,7 @@ run_umount_sqf()
 # run_cp()
 # runs cp on the target system, displays output
 #
-run_cp()
-{
+run_cp(){
     # all cp output goes to /tmp/cp.log, which we tail
     FILES_TOSYNC=$(unsquashfs -l /bootmnt/${install_dir}/${arch}/${SQF_FILE} | wc -l)
     (cp -av ${CP_SOURCE}/* ${CP_TARGET} | \
@@ -510,7 +509,7 @@ run_cp()
 # run_mkinitcpio()
 # runs mkinitcpio on the target system, displays output
 #
-run_mkinitcpio() {
+run_mkinitcpio(){
     chroot_mount
     # fix fsck.btrfs issue
     chroot "$DESTDIR" ln -sf /bin/true /usr/bin/fsck.btrfs &> /dev/null
@@ -540,7 +539,7 @@ run_mkinitcpio() {
 
 # installsystem_unsquash()
 # installs to the target folder
-installsystem_unsquash() {
+installsystem_unsquash(){
     #DIALOG --msgbox "${_installationwillstart}" 0 0
     #clear
     mkdir -p ${DESTDIR}
@@ -599,7 +598,7 @@ installsystem_unsquash() {
 
 # installsystem_cp()
 # installs to the target folder
-installsystem_cp() {
+installsystem_cp(){
     #DIALOG --msgbox "${_installationwillstart}" 0 0
     #clear
     mkdir -p ${DESTDIR}
@@ -662,7 +661,7 @@ installsystem_cp() {
     _system_is_installed=1
 }
 
-installsystem() {
+installsystem(){
     SQFPARAMETER=""
 #    DIALOG --defaultno --yesno "${_installchoice}" 0 0 && SQFPARAMETER="yes"
 #    if [[ "${SQFPARAMETER}" == "yes" ]]; then
@@ -672,7 +671,7 @@ installsystem() {
 #    fi
 }
 
-set_language() {
+set_language(){
     if [[ -e /opt/livecd/lg ]]; then
         /opt/livecd/lg --setup
     else
@@ -680,7 +679,7 @@ set_language() {
     fi
 }
 
-set_keyboard() {
+set_keyboard(){
     if [[ -e /opt/livecd/km ]]; then
         /opt/livecd/km --setup
     else
@@ -688,8 +687,7 @@ set_keyboard() {
     fi
 }
 
-set_clock()
-{
+set_clock(){
     # utc or local?
     DIALOG --menu "${_machinetimezone}" 10 72 2 \
         "UTC" " " \
@@ -768,7 +766,7 @@ set_clock()
     NEXTITEM="2"
 }
 
-dogrub_mkconfig() {
+dogrub_mkconfig(){
     chroot_mount
 
     # prepare grub.cfg
@@ -789,8 +787,7 @@ dogrub_mkconfig() {
     chroot_umount
 }
 
-_setup_user()
-{
+_setup_user(){
     addgroups="video,audio,power,disk,storage,optical,network,lp,scanner"
     DIALOG --inputbox "${_enterusername}" 10 65 "${username}" 2>${ANSWER} || return 1
     REPLY="$(cat ${ANSWER})"
@@ -840,8 +837,7 @@ _setup_user()
     DONE_CONFIG=1
 }
 
-_config_system()
-{
+_config_system(){
     DONE=0
     NEXTITEM=""
     while [[ "${DONE}" = "0" ]]; do
@@ -897,7 +893,7 @@ _config_system()
     done
 }
 
-_rm_kalu() {
+_rm_kalu(){
     local base_check_virtualbox=`dmidecode | grep innotek`
     local base_check_vmware=`dmidecode | grep VMware`
     local base_check_qemu=`dmidecode | grep QEMU`
@@ -914,8 +910,7 @@ _rm_kalu() {
     fi
 }
 
-_post_process()
-{
+_post_process(){
     ## POSTPROCESSING ##
     # /etc/locale.gen
     #
@@ -924,7 +919,7 @@ _post_process()
 
     # installing localization packages
     if [ -e "/bootmnt/${install_dir}/${arch}/lng-image.sqfs" ] ; then
-       _configure_translation_pkgs
+       configure_translation_pkgs_live
        ${PACMAN_LNG} -Sy
        if [ -e "/bootmnt/${install_dir}/${arch}/kde-image.sqfs" ] ; then
           ${PACMAN_LNG} -S ${KDE_LNG_INST} &> /dev/null
@@ -986,8 +981,7 @@ _post_process()
 
 # Disable swap and all mounted partitions for the destination system. Unmount
 # the destination root partition last!
-_umountall()
-{
+_umountall(){
     DIALOG --infobox "$_umountingall" 0 0
     swapoff -a >/dev/null 2>&1
     umount $(mount | grep -v "${DESTDIR} " | grep "${DESTDIR}" | sed 's|\ .*||g') >/dev/null 2>&1
@@ -995,9 +989,10 @@ _umountall()
 }
 
 # Umount all mounted partitions
-_umounthdds()
-{
+_umounthdds(){
     for UPART in $(findpartitions); do
         umount $(mount | grep ${UPART} | grep -v /bootmnt | sed 's|\ .*||g') >/dev/null 2>&1
     done
 }
+
+configure_DE_image

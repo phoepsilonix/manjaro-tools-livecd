@@ -4,70 +4,7 @@
 
 load_config "/opt/livecd/manjaro-tools.conf"
 
-# Basis settings
-TITLE="Manjaro Linux Installation Framework (stable)"
-PKG_OVERLAY="/opt/livecd/pkgs"
-#DIALOGRC="./setuprc"
-
-# Menu Entries
-_done_entry="DONE"
-_other_entry="OTHER"
-_none_entry="NONE"
-
-ANSWER="/tmp/.setup"
-# use the first VT not dedicated to a running console
-LOG="/dev/tty8"
-# don't use /mnt because it's intended to mount other things there!
-mkdir -p /install
-DESTDIR="/install"
-arch=$(uname -m)
-EDITOR="nano"
-
-# abstract the common pacman args
-PACMAN="pacman --root ${DESTDIR} --config /etc/pacman.conf --noconfirm --noprogressbar"
-PACMAN_LNG="pacman --root ${DESTDIR} --config /opt/livecd/pacman-lng.conf --noconfirm --noprogressbar"
-
-# sources
-SYNC_URL=
-MIRRORLIST="/etc/pacman.d/mirrorlist"
-PACKAGES=
-
-# clock
-HARDWARECLOCK="localtime"
-TIMEZONE="America/Montreal"
-
-# partitions
-PART_ROOT=
-
-# default filesystem specs (the + is bootable flag)
-# <mountpoint>:<partsize>:<fstype>[:+]
-DEFAULTFS="/boot:512:ext2:+ swap:256:swap /:6400:reiserfs /home:*:reiserfs"
-
-# install stages
-S_SRC=0         # choose install medium
-S_NET=0         # network configuration
-S_CLOCK=0       # clock and timezone
-S_PART=0        # partitioning
-S_MKFS=0        # formatting
-S_MKFSAUTO=0    # auto fs part/formatting
-S_SELECT=0      # package selection
-S_INSTALL=0     # package installation
-S_CONFIG=0      # configuration editing
-S_GRUB=0        # TODO: kill this - if using grub
-S_BOOT=""       # bootloader installed (set to loader name instead of 1)
-S_PRECONFIG=0   # pre configuration editing
-
-
-# main menu selection tracker
-NEXTITEM=""
-
-# source /opt/livecd/functions
-[[ -r /opt/livecd/util-lng.sh ]] && source /opt/livecd/util-lng.sh
-[[ -r /opt/livecd/util-mnt.sh ]] && source /opt/livecd/util-mnt.sh
-[[ -r /opt/livecd/util-inst.sh ]] && source /opt/livecd/util-inst.sh
-[[ -r /opt/livecd/util-livecd.sh ]] && source /opt/livecd/util-livecd.sh
-
-finddisks() {
+finddisks(){
     workdir="$PWD"
     cd /sys/block
     # ide devices
@@ -112,7 +49,7 @@ finddisks() {
     cd "$workdir"
 }
 
-findpartitions() {
+findpartitions(){
     workdir="$PWD"
     for devpath in $(finddisks); do
         disk=$(echo $devpath | sed 's|.*/||')
@@ -169,7 +106,7 @@ findpartitions() {
 #  mountpoint: Mount point inside the destination system, e.g. '/boot'
 
 # returns: 1 on failure
-_mkfs() {
+_mkfs(){
     local _domk=$1
     local _device=$2
     local _fstype=$3
@@ -251,8 +188,7 @@ _mkfs() {
     fi
 }
 
-autoprepare()
-{
+autoprepare(){
     _umounthdds
     DISCS=$(finddisks)
     if [ $(echo $DISCS | wc -w) -gt 1 ]; then
@@ -433,7 +369,7 @@ EOF
     S_MKFSAUTO=1
 }
 
-partition() {
+partition(){
     if [ "$S_MKFSAUTO" = "1" ]; then
         DIALOG --msgbox "${_partsalreadyprepared}" 0 0
         return 0
@@ -464,7 +400,7 @@ partition() {
     S_PART=1
 }
 
-mountpoints() {
+mountpoints(){
     if [ "$S_MKFSAUTO" = "1" ]; then
         DIALOG --msgbox "${_alreadyprepparts}" 0 0
         return 0
@@ -568,8 +504,7 @@ mountpoints() {
 # comments out old fields and inserts new ones
 # according to partitioning/formatting stage
 #
-auto_fstab()
-{
+auto_fstab(){
     if [ "$S_MKFS" = "1" -o "$S_MKFSAUTO" = "1" ]; then
         if [ -f /tmp/.fstab ]; then
             # comment out stray /dev entries
@@ -580,7 +515,7 @@ auto_fstab()
     fi
 }
 
-dogrub() {
+dogrub(){
     GRUB_SET=""
     local grubmenu="/boot/grub/grub.cfg"
     if [ ! -f /usr/bin/grub-install ]; then
@@ -660,8 +595,7 @@ dogrub() {
     S_GRUB=1
 }
 
-prepare_harddrive()
-{
+prepare_harddrive(){
     S_MKFSAUTO=0
     S_MKFS=0
     DONE=0
@@ -702,8 +636,7 @@ prepare_harddrive()
     fi
 }
 
-configure_system()
-{
+configure_system(){
     ## PREPROCESSING ##
     # only done on first invocation of configure_system
     if [ $S_PRECONFIG -eq 0 ]; then
@@ -777,8 +710,7 @@ configure_system()
     fi
 }
 
-install_bootloader()
-{
+install_bootloader(){
     DIALOG --colors --menu "${_installabootloader}\n\n" \
         10 65 2 \
         "GRUB" "${_installgrubbl}" \
@@ -793,8 +725,7 @@ install_bootloader()
     fi
 }
 
-mainmenu()
-{
+mainmenu(){
     if [ -n "${NEXTITEM}" ]; then
         DEFAULT="--default-item ${NEXTITEM}"
     else
@@ -850,6 +781,69 @@ mainmenu()
         ;;
     esac
 }
+
+# Basis settings
+TITLE="Manjaro Linux Installation Framework (stable)"
+PKG_OVERLAY="/opt/livecd/pkgs"
+#DIALOGRC="./setuprc"
+
+# Menu Entries
+_done_entry="DONE"
+_other_entry="OTHER"
+_none_entry="NONE"
+
+ANSWER="/tmp/.setup"
+# use the first VT not dedicated to a running console
+LOG="/dev/tty8"
+# don't use /mnt because it's intended to mount other things there!
+mkdir -p /install
+DESTDIR="/install"
+arch=$(uname -m)
+EDITOR="nano"
+
+# abstract the common pacman args
+PACMAN="pacman --root ${DESTDIR} --config /etc/pacman.conf --noconfirm --noprogressbar"
+PACMAN_LNG="pacman --root ${DESTDIR} --config /opt/livecd/pacman-lng.conf --noconfirm --noprogressbar"
+
+# sources
+SYNC_URL=
+MIRRORLIST="/etc/pacman.d/mirrorlist"
+PACKAGES=
+
+# clock
+HARDWARECLOCK="localtime"
+TIMEZONE="America/Montreal"
+
+# partitions
+PART_ROOT=
+
+# default filesystem specs (the + is bootable flag)
+# <mountpoint>:<partsize>:<fstype>[:+]
+DEFAULTFS="/boot:512:ext2:+ swap:256:swap /:6400:reiserfs /home:*:reiserfs"
+
+# install stages
+S_SRC=0         # choose install medium
+S_NET=0         # network configuration
+S_CLOCK=0       # clock and timezone
+S_PART=0        # partitioning
+S_MKFS=0        # formatting
+S_MKFSAUTO=0    # auto fs part/formatting
+S_SELECT=0      # package selection
+S_INSTALL=0     # package installation
+S_CONFIG=0      # configuration editing
+S_GRUB=0        # TODO: kill this - if using grub
+S_BOOT=""       # bootloader installed (set to loader name instead of 1)
+S_PRECONFIG=0   # pre configuration editing
+
+
+# main menu selection tracker
+NEXTITEM=""
+
+# source /opt/livecd/functions
+[[ -r /opt/livecd/util-lng.sh ]] && source /opt/livecd/util-lng.sh
+[[ -r /opt/livecd/util-mnt.sh ]] && source /opt/livecd/util-mnt.sh
+[[ -r /opt/livecd/util-inst.sh ]] && source /opt/livecd/util-inst.sh
+[[ -r /opt/livecd/util-livecd.sh ]] && source /opt/livecd/util-livecd.sh
 
 #####################
 ## begin execution ##

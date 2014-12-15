@@ -2,8 +2,7 @@
 # written by Alex Filgueira <faidoc@gmail.com>
 # adapted for Manjaro by Philip Müller <philm@manjaro.org>
 
-abort()
-{
+abort(){
     DIALOG --yesno "${_abort}" 6 42 || return 0
     [[ -e /tmp/.lg ]] && rm -f /tmp/.lg
     [[ -e /tmp/.language ]] && rm -f /tmp/.language
@@ -30,17 +29,16 @@ abort()
 #
 # parameters: see dialog(1)
 # returns: whatever dialog did
-DIALOG() {
+DIALOG(){
     dialog --backtitle "${TITLE}" --aspect 15 "$@"
     return $?
 }
 
-error_lgset()
-{
+error_lgset(){
     DIALOG --msgbox "${_error}" 0 0
 }
 
-dolanguages() {
+dolanguages(){
     # "Scanning for locales..."
     LOCALES=""
     for i in $(cat ${DESTDIR}/etc/locale.gen | grep -v "#  " | sed 's/#//g' | sed 's/ UTF-8//g' | grep .UTF-8); do
@@ -70,7 +68,7 @@ S_NEXTITEM=2
 }
 
 
-mainmenu() {
+mainmenu(){
     if [[ -n "${S_NEXTITEM}" ]]; then
         DEFAULT="--default-item ${S_NEXTITEM}"
     else
