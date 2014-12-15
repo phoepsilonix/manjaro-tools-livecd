@@ -25,7 +25,7 @@ load_config "/opt/livecd/manjaro-tools.conf"
 ping_check=$(LC_ALL=C ping -c 1 www.manjaro.org | grep "1 received")
 
 # list all net devices with mac adress
-net_interfaces() {
+net_interfaces(){
     for i in $(ls /sys/class/net); do 
         echo "$i $(cat /sys/class/net/$i/address)"
     done
@@ -36,7 +36,7 @@ net_interfaces() {
 #
 # args: none
 # returns: 1 on failure
-donetwork() {
+donetwork(){
     NETPARAMETERS=""
     while [[ "${NETPARAMETERS}" = "" ]]; do
         # select network interface
@@ -110,6 +110,8 @@ donetwork() {
         esac
     done
     # profile name
+    ### TODO: update for netctl and openrc; netcfg is deprecated in arch
+    
     NETWORK_PROFILE=""
     DIALOG --inputbox "Enter your network profile name" 7 40 "${INTERFACE}-${CONNECTION}" 2>${ANSWER} || return 1
     NETWORK_PROFILE=/etc/network.d/$(cat ${ANSWER})
@@ -134,6 +136,9 @@ donetwork() {
     fi
     # run netcfg
     netcfg -r $(basename ${NETWORK_PROFILE}) >${LOG}
+    
+    ### end TODO
+    
     if [[ $? -gt 0 ]]; then
         DIALOG --msgbox "Error occured while running netcfg. (see ${LOG} for output)" 0 0
         return 1
@@ -158,8 +163,7 @@ donetwork() {
     S_NET=1
 }
 
-mainmenu()
-{
+mainmenu(){
     if [ -n "$CURRENT_SELECTION" ]; then
         DEFAULT="--default-item $CURRENT_SELECTION"
     else
