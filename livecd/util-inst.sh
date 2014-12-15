@@ -1,5 +1,7 @@
 #!/bin/bash
 
+### TODO: use configure functions from util-livecd.sh?
+
 # Configure Desktop image
 configure_DE_image(){
     if [ -e "/bootmnt/${install_dir}/${arch}/xfce-image.sqfs" ] ; then
