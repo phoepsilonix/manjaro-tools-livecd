@@ -1,4 +1,6 @@
-functions
+util-inst.sh
+util-lng.sh
+util-mnt.sh
 km
 km-en.lng
 km-tr.lng

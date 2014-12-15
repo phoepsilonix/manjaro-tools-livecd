@@ -672,6 +672,22 @@ installsystem() {
 #    fi
 }
 
+set_language() {
+    if [[ -e /opt/livecd/lg ]]; then
+        /opt/livecd/lg --setup
+    else
+        DIALOG --msgbox "Error:\nlg script not found, aborting language setting" 0 0
+    fi
+}
+
+set_keyboard() {
+    if [[ -e /opt/livecd/km ]]; then
+        /opt/livecd/km --setup
+    else
+        DIALOG --msgbox "Error:\nkm script not found, aborting keyboard and console setting" 0 0
+    fi
+}
+
 set_clock()
 {
     # utc or local?
@@ -861,6 +877,7 @@ _config_system()
 		"/etc/conf.d/keymaps"       "${_localeconftext}" \
 		"/etc/conf.d/modules"       "${_modulesconftext}" \
 		"/etc/conf.d/hwclock"       "${_hwclockconftext}" \
+		"/etc/conf.d/xdm"           "${_xdmconftext}" \
 		"/etc/hosts"                "${_hoststext}" \
 		"/etc/hosts.deny"           "${_hostsdenytext}" \
 		"/etc/hosts.allow"          "${_hostsallowtext}" \
@@ -966,7 +983,6 @@ _post_process()
     NEXTITEM=5
     _system_is_configured=1
 }
-
 
 # Disable swap and all mounted partitions for the destination system. Unmount
 # the destination root partition last!
