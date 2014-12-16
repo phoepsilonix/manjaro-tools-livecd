@@ -54,6 +54,8 @@ configure_DE_image(){
     fi
 }
 
+configure_DE_image
+
 DIALOG(){
    # parameters: see dialog(1)
    # returns: whatever dialog did
@@ -997,4 +999,3 @@ _umounthdds(){
     done
 }
 
-configure_DE_image

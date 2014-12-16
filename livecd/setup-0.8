@@ -4,6 +4,15 @@
 
 load_config "/opt/livecd/manjaro-tools.conf"
 
+# source /opt/livecd/functions
+[[ -r /opt/livecd/util-lng.sh ]] && source /opt/livecd/util-lng.sh
+[[ -r /opt/livecd/util-mnt.sh ]] && source /opt/livecd/util-mnt.sh
+[[ -r /opt/livecd/util-inst.sh ]] && source /opt/livecd/util-inst.sh
+[[ -r /opt/livecd/util-livecd.sh ]] && source /opt/livecd/util-livecd.sh
+
+### TODO: rework mounting; switch from util-mnt.sh to util-mount.sh? 
+
+
 finddisks(){
     workdir="$PWD"
     cd /sys/block
@@ -839,13 +848,6 @@ S_PRECONFIG=0   # pre configuration editing
 # main menu selection tracker
 NEXTITEM=""
 
-# source /opt/livecd/functions
-[[ -r /opt/livecd/util-lng.sh ]] && source /opt/livecd/util-lng.sh
-[[ -r /opt/livecd/util-mnt.sh ]] && source /opt/livecd/util-mnt.sh
-[[ -r /opt/livecd/util-inst.sh ]] && source /opt/livecd/util-inst.sh
-[[ -r /opt/livecd/util-livecd.sh ]] && source /opt/livecd/util-livecd.sh
-
-### TODO: rework mounting; switch from util-mnt.sh to util-mount.sh? 
 
 #####################
 ## begin execution ##
