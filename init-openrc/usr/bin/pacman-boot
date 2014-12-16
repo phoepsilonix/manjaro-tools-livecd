@@ -8,5 +8,5 @@ while [[ "$NETWORK_ALIVE" != "" ]];do
 done
 
 if [[ NETWORK_ALIVE == '' ]];then
-	pacman -Sy
+	pacman -Syy
 fi
