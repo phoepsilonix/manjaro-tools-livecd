@@ -22,7 +22,7 @@ load_config "/opt/livecd/manjaro-tools.conf"
 [[ -r /opt/livecd/util-livecd.sh ]] && source /opt/livecd/util-livecd.sh
 
 # check if we have a internet connection
-ping_check=$(LC_ALL=C ping -c 1 www.manjaro.org | grep "1 received")
+#ping_check=$(LC_ALL=C ping -c 1 www.manjaro.org | grep "1 received")
 
 # list all net devices with mac adress
 net_interfaces(){
@@ -224,7 +224,7 @@ fi
 
 # check for pv
 if [ ! -e /usr/bin/pv ]; then
-   if [ "${ping_check}" != "" ]; then
+   if [ "$(check_ping)" != "" ]; then
       pacman -Sy pv --noconfirm &> /dev/null
    else
       DIALOG --msgbox "Package 'pv' is missing. Connect your PC to the Internet and restart the installer!" 12 65

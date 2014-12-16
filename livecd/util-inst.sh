@@ -290,7 +290,7 @@ hd_config(){
     DIALOG --infobox "${_syncpacmandb}" 0 0
     # enable default mirror
     cp -f ${DESTDIR}/etc/pacman.d/mirrorlist ${DESTDIR}/etc/pacman.d/mirrorlist.backup
-    if [ ! -z "$ping_check" ] ; then
+    if [ ! -z "$(check_ping)" ] ; then
        chroot ${DESTDIR} pacman-mirrors -g &>/dev/null
     fi
 
