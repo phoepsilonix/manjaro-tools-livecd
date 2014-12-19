@@ -5,7 +5,7 @@ After=livecd.service
 
 [Service]
 Type=oneshot
-ExecStart=/opt/livecd/mhwd
+ExecStart=/usr/bin/mhwd-live
 
 [Install]
 WantedBy=multi-user.target

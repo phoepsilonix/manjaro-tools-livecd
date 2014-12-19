@@ -2,7 +2,7 @@
 # Copyright 2014 Aaditya Bagga (aaditya_gnulinux@zoho.com)
 # Distributed under the terms of the GNU General Public License v2
 
-description="Manjaro livecd mhwd script"
+#description="Manjaro livecd mhwd-live script"
 
 depend() {
     need livecd
@@ -10,8 +10,8 @@ depend() {
 }
 
 start() {
-	ebegin "Running mhwd script"
+	ebegin "Running mhwd-live script"
 	# run the mhwd script
-	/usr/bin/mhwd &> /dev/null
+	/usr/bin/mhwd-live &> /dev/null
 	eend $?
 }
