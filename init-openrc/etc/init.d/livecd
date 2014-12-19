@@ -3,7 +3,6 @@
 # Distributed under the terms of the GNU General Public License v2
 
 description="Manjaro livecd script"
-#command="/opt/livecd/livecd"
 
 depend() {
     need localmount
@@ -12,6 +11,6 @@ depend() {
 start() {
 	ebegin "Running livecd script"
 	# run the livecd script
-	/opt/livecd/livecd
+	/usr/bin/livecd
 	eend $?
 }

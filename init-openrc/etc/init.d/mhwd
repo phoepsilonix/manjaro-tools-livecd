@@ -3,7 +3,6 @@
 # Distributed under the terms of the GNU General Public License v2
 
 description="Manjaro livecd mhwd script"
-#command="/opt/livecd/mhwd"
 
 depend() {
     need livecd
@@ -13,6 +12,6 @@ depend() {
 start() {
 	ebegin "Running mhwd script"
 	# run the mhwd script
-	/opt/livecd/mhwd &> /dev/null
+	/usr/bin/mhwd &> /dev/null
 	eend $?
 }
