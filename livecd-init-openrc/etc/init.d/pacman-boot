@@ -8,8 +8,9 @@ depend() {
 }
 
 start() {
-	ebegin "Running livecd script"
-	/usr/bin/pacman-boot &> /dev/null
+	ebegin "Sync pacman"
+	#/usr/bin/pacman-boot &> /dev/null
+	/usr/bin/pacman -Syy
 	eend $?
 }
  
