@@ -10,7 +10,7 @@ depend() {
 start() {
 	ebegin "Sync pacman"
 	#/usr/bin/pacman-boot &> /dev/null
-	/usr/bin/pacman -Syy
+	/usr/bin/pacman -Syy &> /dev/null
 	eend $?
 }
  
