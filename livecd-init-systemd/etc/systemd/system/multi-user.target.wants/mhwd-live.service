@@ -1,1 +1,1 @@
-/etc/systemd/system/mhwd-live.service
+/usr/lib/systemd/system/mhwd-live.service
