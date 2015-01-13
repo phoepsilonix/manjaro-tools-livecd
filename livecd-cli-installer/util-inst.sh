@@ -48,6 +48,10 @@ configure_DE_image(){
       DESKTOP="PekWM"
       DESKTOP_IMG="pekwm-image"
     fi
+    if [ -e "/bootmnt/${install_dir}/${arch}/i3-image.sqfs" ] ; then
+      DESKTOP="i3"
+      DESKTOP_IMG="i3-image"
+    fi
     if [ -e "/bootmnt/${install_dir}/${arch}/custom-image.sqfs" ] ; then
       DESKTOP="CUSTOM"
       DESKTOP_IMG="custom-image"
@@ -173,6 +177,9 @@ set_dm_chroot(){
        fi
        if [ -e "/usr/bin/pekwm" ] ; then
          sed -i -e 's|^.*session=.*|session=/usr/bin/pekwm|' ${DESTDIR}/etc/lxdm/lxdm.conf &>/dev/null
+       fi
+       if [ -e "/usr/bin/i3" ] ; then
+         sed -i -e 's|^.*session=.*|session=/usr/bin/i3|' ${DESTDIR}/etc/lxdm/lxdm.conf &>/dev/null
        fi
        chgrp -R lxdm ${DESTDIR}/var/lib/lxdm  &>/dev/null
        chgrp lxdm ${DESTDIR}/etc/lxdm/lxdm.conf  &>/dev/null
