@@ -356,10 +356,10 @@ hd_config(){
 	chroot ${DESTDIR} rc-update add cronie default &>/dev/null
 	chroot ${DESTDIR} rc-update add metalog default &>/dev/null
     fi
-    # for openrc
+    # for openrc (add comment for mounting /tmp as tmpfs in /etc/fstab)
     if [ -e /run/openrc ]; then
-      # Setup /tmp as tmpfs in fstab
-      echo "tmpfs     /tmp    tmpfs    nodev,nosuid    0  0" >> ${DESTDIR}/etc/fstab
+      echo "# Uncomment the line below to setup /tmp as tmpfs" >> ${DESTDIR}/etc/fstab
+      echo "# tmpfs    /tmp    tmpfs    nodev,nosuid    0   0" >> ${DESTDIR}/etc/fstab
     fi
 
     DIALOG --infobox "${_setupdisplaymanager}" 6 40
