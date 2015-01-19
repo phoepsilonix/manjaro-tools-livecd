@@ -8,5 +8,6 @@ while [[ "$NETWORK_ALIVE" != "" ]];do
 done
 
 if [[ NETWORK_ALIVE == '' ]];then
+	pacman-mirrors -g
 	pacman -Syy
 fi
