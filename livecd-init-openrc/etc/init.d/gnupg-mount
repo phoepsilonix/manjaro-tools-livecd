@@ -18,6 +18,6 @@ start() {
 
 stop(){
 	ebegin "Unmounting temporary gnupg directory"
-	umount ${target_dir}
+	umount -l ${target_dir}
 	eend $?
 }
