@@ -4,57 +4,9 @@
 
 # Configure Desktop image
 configure_DE_image(){
-    if [ -e "/bootmnt/${install_dir}/${arch}/xfce-image.sqfs" ] ; then
-      DESKTOP="XFCE"
-      DESKTOP_IMG="xfce-image"
-    fi
-    if [ -e "/bootmnt/${install_dir}/${arch}/openbox-image.sqfs" ] ; then
-      DESKTOP="OPENBOX"
-      DESKTOP_IMG="openbox-image"
-    fi
-    if [ -e "/bootmnt/${install_dir}/${arch}/net-image.sqfs" ] ; then
-      DESKTOP="NET"
-      DESKTOP_IMG="net-image"
-    fi
-    if [ -e "/bootmnt/${install_dir}/${arch}/gnome-image.sqfs" ] ; then
-      DESKTOP="GNOME"
-      DESKTOP_IMG="gnome-image"
-    fi
-    if [ -e "/bootmnt/${install_dir}/${arch}/cinnamon-image.sqfs" ] ; then
-      DESKTOP="CINNAMON"
-      DESKTOP_IMG="cinnamon-image"
-    fi
-    if [ -e "/bootmnt/${install_dir}/${arch}/mate-image.sqfs" ] ; then
-      DESKTOP="MATE"
-      DESKTOP_IMG="mate-image"
-    fi
-    if [ -e "/bootmnt/${install_dir}/${arch}/kde-image.sqfs" ] ; then
-      DESKTOP="KDE"
-      DESKTOP_IMG="kde-image"
-    fi
-    if [ -e "/bootmnt/${install_dir}/${arch}/lxde-image.sqfs" ] ; then
-      DESKTOP="LXDE"
-      DESKTOP_IMG="lxde-image"
-    fi
-    if [ -e "/bootmnt/${install_dir}/${arch}/lxqt-image.sqfs" ] ; then
-      DESKTOP="LXQt"
-      DESKTOP_IMG="lxqt-image"
-    fi
-    if [ -e "/bootmnt/${install_dir}/${arch}/enlightenment-image.sqfs" ] ; then
-      DESKTOP="ENLIGHTENMENT"
-      DESKTOP_IMG="enlightenment-image"
-    fi
-    if [ -e "/bootmnt/${install_dir}/${arch}/pekwm-image.sqfs" ] ; then
-      DESKTOP="PekWM"
-      DESKTOP_IMG="pekwm-image"
-    fi
-    if [ -e "/bootmnt/${install_dir}/${arch}/i3-image.sqfs" ] ; then
-      DESKTOP="i3"
-      DESKTOP_IMG="i3-image"
-    fi
-    if [ -e "/bootmnt/${install_dir}/${arch}/custom-image.sqfs" ] ; then
-      DESKTOP="CUSTOM"
-      DESKTOP_IMG="custom-image"
+    if [ -e "/bootmnt/${install_dir}/${arch}/${custom}-image.sqfs" ] ; then
+      DESKTOP="${custom^^}"
+      DESKTOP_IMG="${custom}-image"
     fi
 }
 
@@ -231,7 +183,7 @@ set_dm_chroot(){
        fi
        _dm="sddm"
     fi
-    
+
     if [[ -e /run/openrc ]];then
 	local _conf_xdm='DISPLAYMANAGER="'${_dm}'"'
 	echo "set ${_conf_xdm}" >> /tmp/livecd.log
@@ -274,7 +226,7 @@ hd_config(){
     cp -a ${DESTDIR}/etc/skel/. ${DESTDIR}/root/ &>/dev/null
 
     sed -i 's/^#\(en_US.*\)/\1/' ${DESTDIR}/etc/locale.gen &>/dev/null
-    
+
     chroot_mount
 
     # copy generated xorg.xonf to target
@@ -290,7 +242,7 @@ hd_config(){
     # configure alsa
     #set_alsa
     configure_alsa_live
-    
+
     # configure pulse
     chroot ${DESTDIR} pulseaudio-ctl normal
     # save settings
@@ -318,7 +270,7 @@ hd_config(){
 
     if [ -e "/opt/livecd/pacman-gfx.conf" ] ; then
        DIALOG --infobox "${_installvideodriver}"  6 40
-    
+
        mkdir -p ${DESTDIR}/opt/livecd
        mount -o bind /opt/livecd ${DESTDIR}/opt/livecd > /tmp/mount.pkgs.log
        ls ${DESTDIR}/opt/livecd >> /tmp/mount.pkgs.log
@@ -350,7 +302,7 @@ hd_config(){
     if [[ -e /run/systemd ]]; then
 	DIALOG --infobox "${_setupsystemd}" 6 40
 	sleep 3
-	
+
 	chroot ${DESTDIR} systemctl enable org.cups.cupsd.service &>/dev/null
 	chroot ${DESTDIR} systemctl enable dcron.service &>/dev/null
 	chroot ${DESTDIR} systemctl enable NetworkManager.service &>/dev/null
@@ -358,7 +310,7 @@ hd_config(){
     else
 	DIALOG --infobox "${_setupopenrc}" 6 40
 	sleep 3
-	
+
 	chroot ${DESTDIR} rc-update add cups default &>/dev/null
 	chroot ${DESTDIR} rc-update add cronie default &>/dev/null
 	chroot ${DESTDIR} rc-update add metalog default &>/dev/null
@@ -434,7 +386,7 @@ hd_config(){
 set_passwd(){
     # trap tmp-file for passwd
     trap "rm -f ${ANSWER}" 0 1 2 5 15
- 
+
     # get password
     DIALOG --title "$_passwdtitle" \
     --clear \
@@ -732,8 +684,8 @@ set_clock(){
 
     # set system clock from hwclock - stolen from rc.sysinit
     local HWCLOCK_PARAMS=""
-    
-    
+
+
     if [[ -e /run/openrc ]];then
 	local _conf_clock='clock="'${HARDWARECLOCK}'"'
 	sed -i -e "s|^.*clcok=.*|${_conf_clock}|" /etc/conf.d/hwclock
@@ -754,11 +706,11 @@ set_clock(){
         ln -sf "/usr/share/zoneinfo/$TIMEZONE" /etc/localtime
     fi
     /usr/bin/hwclock --hctosys $HWCLOCK_PARAMS --noadjfile
-    
+
     if [[ -e /run/openrc ]];then
 	echo "${TIMEZONE}" > /etc/timezone
     fi
-    
+
     # display and ask to set date/time
     DIALOG --calendar "${_choosedatetime}" 0 0 0 0 0 2> ${ANSWER} || return 1
     local _date="$(cat ${ANSWER})"
@@ -974,7 +926,7 @@ _post_process(){
               hook="resume filesystems"
               replaced="1"
            fi
-           hooks="${hooks} ${hook}"		
+           hooks="${hooks} ${hook}"
        done
        hooks=$(echo "${hooks}" | sed 's/^ *//;s/ *$//;s/ \{1,\}/ /g')
        if [ "x$(echo \"${hooks}\" | grep resume)" == "x" ]; then
