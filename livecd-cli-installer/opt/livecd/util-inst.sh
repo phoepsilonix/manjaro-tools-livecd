@@ -241,7 +241,7 @@ hd_config(){
     sleep 3
     # configure alsa
     #set_alsa
-    configure_alsa_live
+    configure_alsa
 
     # configure pulse
     chroot ${DESTDIR} pulseaudio-ctl normal
@@ -887,7 +887,7 @@ _post_process(){
 
     # installing localization packages
     if [ -e "/bootmnt/${install_dir}/${arch}/lng-image.sqfs" ] ; then
-       configure_translation_pkgs_live
+       configure_translation_pkgs
        ${PACMAN_LNG} -Sy
        if [ -e "/bootmnt/${install_dir}/${arch}/kde-image.sqfs" ] ; then
           ${PACMAN_LNG} -S ${KDE_LNG_INST} &> /dev/null

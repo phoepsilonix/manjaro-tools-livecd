@@ -5,12 +5,12 @@
 load_config "/opt/livecd/manjaro-tools.conf"
 
 # source /opt/livecd/functions
-[[ -r /opt/livecd/util-lng.sh ]] && source /opt/livecd/util-lng.sh
+
+[[ -r /opt/livecd/util-livecd.sh ]] && source /opt/livecd/util-livecd.sh
 [[ -r /opt/livecd/util-mnt.sh ]] && source /opt/livecd/util-mnt.sh
 [[ -r /opt/livecd/util-inst.sh ]] && source /opt/livecd/util-inst.sh
-[[ -r /opt/livecd/util-livecd.sh ]] && source /opt/livecd/util-livecd.sh
 
-### TODO: rework mounting; switch from util-mnt.sh to util-mount.sh? 
+### TODO: rework mounting; switch from util-mnt.sh to util-mount.sh?
 
 
 finddisks(){
@@ -174,7 +174,7 @@ _mkfs(){
         if [ $? != 0 ]; then
             DIALOG --msgbox "${_errormounting} ${_dest}${_mountpoint}" 0 0
             return 1
-        fi 
+        fi
         # create main system subvolume if we use btrfs for root and mount it
         if [ "${_fstype}" == "btrfs" ] && [ "${_mountpoint}" == "/" ]; then
             btrfs subvolume create ${_dest}${_mountpoint}manjaro_$arch >$LOG 2>&1
@@ -334,7 +334,7 @@ autoprepare(){
         else
             bootflag_spec=""
         fi
-    
+
         sfdisk_input="${sfdisk_input}${fssize_spec}${fstype_spec}${bootflag_spec}\n"
     done
     sfdisk_input=$(printf "$sfdisk_input")
@@ -625,14 +625,14 @@ prepare_harddrive(){
             "1")
                 autoprepare
                 CANCEL="0"
-                _hd_is_prepared=1 
+                _hd_is_prepared=1
                 NEXTITEM="3";;
             "2")
                 partition
                 PARTFINISH=""
                 mountpoints
                 CANCEL="0"
-                _hd_is_prepared=1 
+                _hd_is_prepared=1
                 NEXTITEM="3";;
             *)
                 DONE=1 ;;
@@ -665,8 +665,8 @@ configure_system(){
            sed -i -e "s/^HOOKS=.*/HOOKS=\"${HOOKS} plymouth\"/g" ${DESTDIR}/etc/mkinitcpio.conf
         fi
 
- 	# Determind which language we are using
-	set_locale
+		# Determind which language we are using
+		configure_language
     fi
 
     S_PRECONFIG=1
@@ -765,7 +765,7 @@ mainmenu(){
         "4")
             if [ "$_system_is_installed" == "1" ];then
              configure_system
-            else 
+            else
              DIALOG --msgbox "$_forgotinstalling" 10 40
             fi
         ;;

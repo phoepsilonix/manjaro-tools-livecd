@@ -16,17 +16,16 @@ CURRENT_SELECTION=""
 
 load_config "/opt/livecd/manjaro-tools.conf"
 
+[[ -r /opt/livecd/util-livecd.sh ]] && source /opt/livecd/util-livecd.sh
 [[ -r /opt/livecd/util-mnt.sh ]] && source /opt/livecd/util-mnt.sh
 [[ -r /opt/livecd/util-inst.sh ]] && source /opt/livecd/util-inst.sh
-[[ -r /opt/livecd/util-lng.sh ]] && source /opt/livecd/util-lng.sh
-[[ -r /opt/livecd/util-livecd.sh ]] && source /opt/livecd/util-livecd.sh
 
 # check if we have a internet connection
 #ping_check=$(LC_ALL=C ping -c 1 www.manjaro.org | grep "1 received")
 
 # list all net devices with mac adress
 net_interfaces(){
-    for i in $(ls /sys/class/net); do 
+    for i in $(ls /sys/class/net); do
         echo "$i $(cat /sys/class/net/$i/address)"
     done
 }
@@ -111,7 +110,7 @@ donetwork(){
     done
     # profile name
     ### TODO: update for netctl and openrc; netcfg is deprecated in arch
-    
+
     NETWORK_PROFILE=""
     DIALOG --inputbox "Enter your network profile name" 7 40 "${INTERFACE}-${CONNECTION}" 2>${ANSWER} || return 1
     NETWORK_PROFILE=/etc/network.d/$(cat ${ANSWER})
@@ -136,9 +135,9 @@ donetwork(){
     fi
     # run netcfg
     netcfg -r $(basename ${NETWORK_PROFILE}) >${LOG}
-    
+
     ### end TODO
-    
+
     if [[ $? -gt 0 ]]; then
         DIALOG --msgbox "Error occured while running netcfg. (see ${LOG} for output)" 0 0
         return 1
