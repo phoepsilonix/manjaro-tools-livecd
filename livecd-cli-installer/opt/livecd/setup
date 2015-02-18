@@ -1,7 +1,7 @@
 #!/bin/bash
 # installer wrapper
 
-TITLE="Manjaro Linux Installation Framework (v0.8.7)"
+TITLE="Manjaro Linux Installation Framework (v0.8.12)"
 
 _yes="Yes"
 _no="No"
@@ -12,12 +12,6 @@ ANSWER="/tmp/.setup"
 # main menu selection tracker
 CURRENT_SELECTION=""
 
-[[ -r /opt/livecd/util.sh ]] && source /opt/livecd/util.sh
-
-load_config "/opt/livecd/manjaro-tools.conf"
-
-[[ -r /opt/livecd/util-livecd.sh ]] && source /opt/livecd/util-livecd.sh
-[[ -r /opt/livecd/util-mnt.sh ]] && source /opt/livecd/util-mnt.sh
 [[ -r /opt/livecd/util-inst.sh ]] && source /opt/livecd/util-inst.sh
 
 # check if we have a internet connection

@@ -5,11 +5,9 @@
 load_config "/opt/livecd/manjaro-tools.conf"
 
 [[ -r /opt/livecd/util-livecd.sh ]] && source /opt/livecd/util-livecd.sh
-[[ -r /opt/livecd/util-mnt.sh ]] && source /opt/livecd/util-mnt.sh
 [[ -r /opt/livecd/util-inst.sh ]] && source /opt/livecd/util-inst.sh
 
-### TODO: rework mounting; switch from util-mnt.sh to util-mount.sh?
-
+configure_DE_image
 
 # Basis settings
 TITLE="Manjaro Linux Installation Framework (testing)"
@@ -4038,8 +4036,8 @@ configure_system(){
            sed -i -e "s/^HOOKS=.*/HOOKS=\"${HOOKS} plymouth\"/g" ${DESTDIR}/etc/mkinitcpio.conf
         fi
 
- 	# Determind which language we are using
-	configure_language
+		# Determind which language we are using
+		configure_language
     fi
 
     S_PRECONFIG=1

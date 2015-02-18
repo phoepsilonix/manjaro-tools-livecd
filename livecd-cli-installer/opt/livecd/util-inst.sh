@@ -1,6 +1,6 @@
 #!/bin/bash
 
-### TODO: use configure functions from util-livecd.sh?
+[[ -r /opt/livecd/util-mnt.sh ]] && source /opt/livecd/util-mnt.sh
 
 # Configure Desktop image
 configure_DE_image(){
@@ -9,8 +9,6 @@ configure_DE_image(){
       DESKTOP_IMG="${custom}-image"
     fi
 }
-
-configure_DE_image
 
 DIALOG(){
    # parameters: see dialog(1)
@@ -756,7 +754,7 @@ dogrub_mkconfig(){
 }
 
 _setup_user(){
-    addgroups="video,audio,power,disk,storage,optical,network,lp,scanner"
+   # addgroups="video,audio,power,disk,storage,optical,network,lp,scanner"
     DIALOG --inputbox "${_enterusername}" 10 65 "${username}" 2>${ANSWER} || return 1
     REPLY="$(cat ${ANSWER})"
     while [ -z "$(echo $REPLY |grep -E '^[a-z_][a-z0-9_-]*[$]?$')" ];do
@@ -815,42 +813,42 @@ _config_system(){
             DEFAULT=""
         fi
         if [[ -e /run/systemd ]]; then
-	    DIALOG $DEFAULT --menu "Configuration" 17 78 10 \
-		"/etc/fstab"                "${_fstabtext}" \
-		"/etc/mkinitcpio.conf"      "${_mkinitcpioconftext}" \
-		"/etc/resolv.conf"          "${_resolvconftext}" \
-		"/etc/hostname"             "${_hostnametext}" \
-		"/etc/hosts"                "${_hoststext}" \
-		"/etc/hosts.deny"           "${_hostsdenytext}" \
-		"/etc/hosts.allow"          "${_hostsallowtext}" \
-		"/etc/locale.gen"           "${_localegentext}" \
-		"/etc/locale.conf"           "${_localeconftext}" \
-		"/etc/environment"           "${_environmenttext}" \
-		"/etc/pacman.d/mirrorlist"  "${_mirrorlisttext}" \
-		"/etc/X11/xorg.conf.d/10-evdev.conf"  "${_xorgevdevconftext}" \
-		"/etc/keyboard.conf"        "${_vconsoletext}" \
-		"${_return_label}"        "${_return_label}" 2>${ANSWER} || NEXTITEM="${_return_label}"
-	    NEXTITEM="$(cat ${ANSWER})"
+			DIALOG $DEFAULT --menu "Configuration" 17 78 10 \
+				"/etc/fstab"                "${_fstabtext}" \
+				"/etc/mkinitcpio.conf"      "${_mkinitcpioconftext}" \
+				"/etc/resolv.conf"          "${_resolvconftext}" \
+				"/etc/hostname"             "${_hostnametext}" \
+				"/etc/hosts"                "${_hoststext}" \
+				"/etc/hosts.deny"           "${_hostsdenytext}" \
+				"/etc/hosts.allow"          "${_hostsallowtext}" \
+				"/etc/locale.gen"           "${_localegentext}" \
+				"/etc/locale.conf"           "${_localeconftext}" \
+				"/etc/environment"           "${_environmenttext}" \
+				"/etc/pacman.d/mirrorlist"  "${_mirrorlisttext}" \
+				"/etc/X11/xorg.conf.d/10-evdev.conf"  "${_xorgevdevconftext}" \
+				"/etc/keyboard.conf"        "${_vconsoletext}" \
+				"${_return_label}"        "${_return_label}" 2>${ANSWER} || NEXTITEM="${_return_label}"
+			NEXTITEM="$(cat ${ANSWER})"
         else
-	    DIALOG $DEFAULT --menu "Configuration" 17 78 10 \
-		"/etc/fstab"                "${_fstabtext}" \
-		"/etc/mkinitcpio.conf"      "${_mkinitcpioconftext}" \
-		"/etc/resolv.conf"          "${_resolvconftext}" \
-		"/etc/rc.conf"              "${_rcconfigtext}" \
-		"/etc/conf.d/hostname"      "${_hostnametext}" \
-		"/etc/conf.d/keymaps"       "${_localeconftext}" \
-		"/etc/conf.d/modules"       "${_modulesconftext}" \
-		"/etc/conf.d/hwclock"       "${_hwclockconftext}" \
-		"/etc/conf.d/xdm"           "${_xdmconftext}" \
-		"/etc/hosts"                "${_hoststext}" \
-		"/etc/hosts.deny"           "${_hostsdenytext}" \
-		"/etc/hosts.allow"          "${_hostsallowtext}" \
-		"/etc/locale.gen"           "${_localegentext}" \
-		"/etc/environment"          "${_environmenttext}" \
-		"/etc/pacman.d/mirrorlist"  "${_mirrorlisttext}" \
-		"/etc/X11/xorg.conf.d/10-evdev.conf"  "${_xorgevdevconftext}" \
-		"${_return_label}"        "${_return_label}" 2>${ANSWER} || NEXTITEM="${_return_label}"
-	    NEXTITEM="$(cat ${ANSWER})"
+			DIALOG $DEFAULT --menu "Configuration" 17 78 10 \
+				"/etc/fstab"                "${_fstabtext}" \
+				"/etc/mkinitcpio.conf"      "${_mkinitcpioconftext}" \
+				"/etc/resolv.conf"          "${_resolvconftext}" \
+				"/etc/rc.conf"              "${_rcconfigtext}" \
+				"/etc/conf.d/hostname"      "${_hostnametext}" \
+				"/etc/conf.d/keymaps"       "${_localeconftext}" \
+				"/etc/conf.d/modules"       "${_modulesconftext}" \
+				"/etc/conf.d/hwclock"       "${_hwclockconftext}" \
+				"/etc/conf.d/xdm"           "${_xdmconftext}" \
+				"/etc/hosts"                "${_hoststext}" \
+				"/etc/hosts.deny"           "${_hostsdenytext}" \
+				"/etc/hosts.allow"          "${_hostsallowtext}" \
+				"/etc/locale.gen"           "${_localegentext}" \
+				"/etc/environment"          "${_environmenttext}" \
+				"/etc/pacman.d/mirrorlist"  "${_mirrorlisttext}" \
+				"/etc/X11/xorg.conf.d/10-evdev.conf"  "${_xorgevdevconftext}" \
+				"${_return_label}"        "${_return_label}" 2>${ANSWER} || NEXTITEM="${_return_label}"
+			NEXTITEM="$(cat ${ANSWER})"
         fi
 
         if [ "${NEXTITEM}" = "${_return_label}" -o -z "${NEXTITEM}" ]; then       # exit
