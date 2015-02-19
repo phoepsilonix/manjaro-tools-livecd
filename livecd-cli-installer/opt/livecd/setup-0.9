@@ -40,7 +40,7 @@ PACKAGES=
 
 # clock
 HARDWARECLOCK="localtime"
-TIMEZONE="America/Montreal"
+TIMEZONE="Europe/London"
 
 # destination of blockdevices in /sys
 block="/sys/block"
@@ -74,13 +74,6 @@ username=''
 [[ -r /opt/livecd/util-livecd.sh ]] && source /opt/livecd/util-livecd.sh
 [[ -r /opt/livecd/util-mnt.sh ]] && source /opt/livecd/util-mnt.sh
 [[ -r /opt/livecd/util-inst.sh ]] && source /opt/livecd/util-inst.sh
-
-printk(){
-	case ${1} in
-		"on")  echo 4 >/proc/sys/kernel/printk ;;
-		"off") echo 0 >/proc/sys/kernel/printk ;;
-	esac
-}
 
 # activate_dmraid()
 # activate dmraid devices
