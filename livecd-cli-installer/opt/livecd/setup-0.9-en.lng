@@ -124,7 +124,7 @@ _passwddl="Enter your password for:"
 _passwddl1="Enter your password for:"
 _passwddl2="Re-Enter your password for:"
 _passwddl3="Password don't match!\nRe-Enter your password for:"
-  
+
 _definerootpass="Change root password"
 _defineuser="Setup user account(s)"
 _defineuserpass="Change user password"
@@ -150,6 +150,7 @@ _localegentext="Edit system languages"
 _localeconftext="Edit default used language"
 _environmenttext="Edit environment language"
 _mirrorlisttext="Packages mirror list"
+_mirrorconftext="Mirrors config"
 _xorgevdevconftext="Xorg keymap"
 _xorgkblayouttext="Xorg keyboard layout"
 _vconsoletext="Console keyboard layout"
@@ -162,7 +163,7 @@ _installgrubdl3="Is this correct? If not answer with \"No\" to change your targe
 
 _none_label="None"
 
-_mainmenuhelp="Use ↓ and ↑ to choose an entry, enter to launch it." 
+_mainmenuhelp="Use ↓ and ↑ to choose an entry, enter to launch it."
 _datetimetext="Set date and time"
 _networktext="Set up Network"
 _preparediskstext="Disk(s) preparation"
@@ -172,7 +173,7 @@ _instbootloadertext="Install bootloader"
 _quittext="Quit"
 _installationfinished='Installation finished!'
 _cancelinstall="Cancel installation?"
-_instwelcomemessage="Welcome to the TESTING Manjaro Linux CLI installation program. \nThis version might not work for you installing Manjaro to your harddrive. \nSome features aren't fully tested yet. Good luck!"
+_instwelcomemessage="Welcome to the Manjaro Linux CLI installation program $VER."
 _forgotsystemconf="Information\n\nYou forgot to configurate your system."
 _forgotinstalling="Information\n\nInstalling before configuring would seem more logical."
 _forgotpreparehd="Information\n\nPrepare your HDD first."
@@ -197,7 +198,7 @@ _menu_descg="\nPARTUUID and PARTLABEL are specific to GPT disks.\nIn GPT disks, 
 _device_name_scheme_1="Select the device name scheme you want to use in config files. "
 _device_name_scheme_2=" FSUUID is recommended."
 
-_gptinfo="Do you want to use GUID Partition Table (GPT)?\n\nIt is a standard for the layout of the partition table on a physical hard disk. Although it forms a part of the Unified Extensible Firmware Interface (UEFI) standard (replacement for the PC BIOS firmware), it is also used on some BIOS systems because of the limitations of MBR aka msdos partition tables, which restrict maximum disk size to 2 TiB.\n\nWindows XP and earlier Windows systems cannot (without hacks) read or write to drives formatted with a GUID partition table, however, Vista and Windows 7 and later versions include the capability to use GPT for non-boot aka data disks (only UEFI systems can boot Windows from GPT disks).\n\nAttention:\n- Please check if your other operating systems have GPT support!\n- Use this option for a GRUB(2) setup, which should support LVM, RAID\n  etc., which doesn't fit into the usual 30k MS-DOS post-MBR gap.\n- BIOS-GPT boot may not work in some Lenovo systems (irrespective of the\n 
+_gptinfo="Do you want to use GUID Partition Table (GPT)?\n\nIt is a standard for the layout of the partition table on a physical hard disk. Although it forms a part of the Unified Extensible Firmware Interface (UEFI) standard (replacement for the PC BIOS firmware), it is also used on some BIOS systems because of the limitations of MBR aka msdos partition tables, which restrict maximum disk size to 2 TiB.\n\nWindows XP and earlier Windows systems cannot (without hacks) read or write to drives formatted with a GUID partition table, however, Vista and Windows 7 and later versions include the capability to use GPT for non-boot aka data disks (only UEFI systems can boot Windows from GPT disks).\n\nAttention:\n- Please check if your other operating systems have GPT support!\n- Use this option for a GRUB(2) setup, which should support LVM, RAID\n  etc., which doesn't fit into the usual 30k MS-DOS post-MBR gap.\n- BIOS-GPT boot may not work in some Lenovo systems (irrespective of the\n
   bootloader used). "
 
 _disable_swap="Disabling swapspace, unmounting already mounted disk devices..."
@@ -319,11 +320,11 @@ to modify.\n\nThe basic building block of LVM are:\n
   which you can have virtual groups. It has a special header and is\n
   divided into physical extents. Think of physical volumes as big building\n
   blocks which can be used to build your hard drive.\n
-- Volume group (VG):\n 
+- Volume group (VG):\n
   Group of physical volumes that are used as storage volume (as one disk).\n
-  They contain logical volumes. Think of volume groups as hard drives.\n 
+  They contain logical volumes. Think of volume groups as hard drives.\n
 - Logical volume(LV):\n
-  A \"virtual/logical partition\" that resides in a volume group and is\n 
+  A \"virtual/logical partition\" that resides in a volume group and is\n
   composed of physical extents. Think of logical volumes as normal\n
   partitions."
 

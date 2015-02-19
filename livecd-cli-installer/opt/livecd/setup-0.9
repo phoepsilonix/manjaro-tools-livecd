@@ -4076,11 +4076,11 @@ configure_system(){
                 DONE_CONFIG="1"
                 NEXTITEM="Setup-User" ;;
             "Setup-User")
-                _setup_user && NEXTITEM="Setup-User" ;;
+                _setup_user && NEXTITEM="Setup-Locale" ;;
             "Setup-Locale")
-                set_language && NEXTITEM="Setup-Locale" ;;
+                set_language && NEXTITEM="Setup-Keymap" ;;
             "Setup-Keymap")
-                set_keyboard && NEXTITEM="Setup-Keymap" ;;
+                set_keyboard && NEXTITEM="Config-System" ;;
             "Config-System")
                 _config_system && NEXTITEM="${_return_label}" ;;
             "${_return_label}")

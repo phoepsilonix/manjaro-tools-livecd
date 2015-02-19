@@ -301,18 +301,23 @@ hd_config(){
 	if [[ -e /run/systemd ]]; then
 		DIALOG --infobox "${_setupsystemd}" 6 40
 		sleep 3
+		for svc in ${start_systemd[@]}; do
+			chroot ${DESTDIR} systemctl enable $svc
+		done
 
-		chroot ${DESTDIR} systemctl enable org.cups.cupsd.service &>/dev/null
-		chroot ${DESTDIR} systemctl enable dcron.service &>/dev/null
-		chroot ${DESTDIR} systemctl enable NetworkManager.service &>/dev/null
-		chroot ${DESTDIR} systemctl enable remote-fs.target &>/dev/null
-		else
+# 		chroot ${DESTDIR} systemctl enable org.cups.cupsd.service &>/dev/null
+# 		chroot ${DESTDIR} systemctl enable dcron.service &>/dev/null
+# 		chroot ${DESTDIR} systemctl enable NetworkManager.service &>/dev/null
+# 		chroot ${DESTDIR} systemctl enable remote-fs.target &>/dev/null
+	else
 		DIALOG --infobox "${_setupopenrc}" 6 40
 		sleep 3
-
-		chroot ${DESTDIR} rc-update add cups default &>/dev/null
-		chroot ${DESTDIR} rc-update add cronie default &>/dev/null
-		chroot ${DESTDIR} rc-update add metalog default &>/dev/null
+		for svc in ${start_openrc[@]}; do
+			chroot ${DESTDIR} rc-update add $svc default
+		done
+# 		chroot ${DESTDIR} rc-update add cups default &>/dev/null
+# 		chroot ${DESTDIR} rc-update add cronie default &>/dev/null
+# 		chroot ${DESTDIR} rc-update add metalog default &>/dev/null
 	fi
 	# for openrc (add comment for mounting /tmp as tmpfs in /etc/fstab)
 	if [ -e /run/openrc ]; then
@@ -823,40 +828,42 @@ _config_system(){
 		fi
 		if [[ -e /run/systemd ]]; then
 			DIALOG $DEFAULT --menu "Configuration" 17 78 10 \
-			"/etc/fstab"                "${_fstabtext}" \
-			"/etc/mkinitcpio.conf"      "${_mkinitcpioconftext}" \
-			"/etc/resolv.conf"          "${_resolvconftext}" \
-			"/etc/hostname"             "${_hostnametext}" \
-			"/etc/hosts"                "${_hoststext}" \
-			"/etc/hosts.deny"           "${_hostsdenytext}" \
-			"/etc/hosts.allow"          "${_hostsallowtext}" \
-			"/etc/locale.gen"           "${_localegentext}" \
-			"/etc/locale.conf"           "${_localeconftext}" \
-			"/etc/environment"           "${_environmenttext}" \
-			"/etc/pacman.d/mirrorlist"  "${_mirrorlisttext}" \
-			"/etc/X11/xorg.conf.d/10-evdev.conf"  "${_xorgevdevconftext}" \
-			"/etc/keyboard.conf"        "${_vconsoletext}" \
-			"${_return_label}"        "${_return_label}" 2>${ANSWER} || NEXTITEM="${_return_label}"
+				"/etc/fstab"                "${_fstabtext}" \
+				"/etc/mkinitcpio.conf"      "${_mkinitcpioconftext}" \
+				"/etc/resolv.conf"          "${_resolvconftext}" \
+				"/etc/hostname"             "${_hostnametext}" \
+				"/etc/hosts"                "${_hoststext}" \
+				"/etc/hosts.deny"           "${_hostsdenytext}" \
+				"/etc/hosts.allow"          "${_hostsallowtext}" \
+				"/etc/locale.gen"           "${_localegentext}" \
+				"/etc/locale.conf"           "${_localeconftext}" \
+				"/etc/environment"           "${_environmenttext}" \
+				"/etc/pacman-mirrors.conf"  "${_mirrorconftext}" \
+				"/etc/pacman.d/mirrorlist"  "${_mirrorlisttext}" \
+				"/etc/X11/xorg.conf.d/10-evdev.conf"  "${_xorgevdevconftext}" \
+				"/etc/keyboard.conf"        "${_vconsoletext}" \
+				"${_return_label}"        "${_return_label}" 2>${ANSWER} || NEXTITEM="${_return_label}"
 			NEXTITEM="$(cat ${ANSWER})"
 		else
 			DIALOG $DEFAULT --menu "Configuration" 17 78 10 \
-			"/etc/fstab"                "${_fstabtext}" \
-			"/etc/mkinitcpio.conf"      "${_mkinitcpioconftext}" \
-			"/etc/resolv.conf"          "${_resolvconftext}" \
-			"/etc/rc.conf"              "${_rcconfigtext}" \
-			"/etc/conf.d/hostname"      "${_hostnametext}" \
-			"/etc/conf.d/keymaps"       "${_localeconftext}" \
-			"/etc/conf.d/modules"       "${_modulesconftext}" \
-			"/etc/conf.d/hwclock"       "${_hwclockconftext}" \
-			"/etc/conf.d/xdm"           "${_xdmconftext}" \
-			"/etc/hosts"                "${_hoststext}" \
-			"/etc/hosts.deny"           "${_hostsdenytext}" \
-			"/etc/hosts.allow"          "${_hostsallowtext}" \
-			"/etc/locale.gen"           "${_localegentext}" \
-			"/etc/environment"          "${_environmenttext}" \
-			"/etc/pacman.d/mirrorlist"  "${_mirrorlisttext}" \
-			"/etc/X11/xorg.conf.d/10-evdev.conf"  "${_xorgevdevconftext}" \
-			"${_return_label}"        "${_return_label}" 2>${ANSWER} || NEXTITEM="${_return_label}"
+				"/etc/fstab"                "${_fstabtext}" \
+				"/etc/mkinitcpio.conf"      "${_mkinitcpioconftext}" \
+				"/etc/resolv.conf"          "${_resolvconftext}" \
+				"/etc/rc.conf"              "${_rcconfigtext}" \
+				"/etc/conf.d/hostname"      "${_hostnametext}" \
+				"/etc/conf.d/keymaps"       "${_localeconftext}" \
+				"/etc/conf.d/modules"       "${_modulesconftext}" \
+				"/etc/conf.d/hwclock"       "${_hwclockconftext}" \
+				"/etc/conf.d/xdm"           "${_xdmconftext}" \
+				"/etc/hosts"                "${_hoststext}" \
+				"/etc/hosts.deny"           "${_hostsdenytext}" \
+				"/etc/hosts.allow"          "${_hostsallowtext}" \
+				"/etc/locale.gen"           "${_localegentext}" \
+				"/etc/environment"          "${_environmenttext}" \
+				"/etc/pacman-mirrors.conf"  "${_mirrorconftext}" \
+				"/etc/pacman.d/mirrorlist"  "${_mirrorlisttext}" \
+				"/etc/X11/xorg.conf.d/10-evdev.conf"  "${_xorgevdevconftext}" \
+				"${_return_label}"        "${_return_label}" 2>${ANSWER} || NEXTITEM="${_return_label}"
 			NEXTITEM="$(cat ${ANSWER})"
 		fi
 
