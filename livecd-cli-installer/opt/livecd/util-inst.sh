@@ -525,175 +525,6 @@ installsystem_unsquash(){
     _system_is_installed=1
 }
 
-# installsystem_cp()
-# installs to the target folder
-installsystem_cp(){
-    #DIALOG --msgbox "${_installationwillstart}" 0 0
-    #clear
-    mkdir -p ${DESTDIR}
-    #rsync -av --progress /source/root-image ${DESTDIR}
-    CP_SOURCE=/source/root-image
-    mkdir -p ${CP_SOURCE}
-    CP_TARGET=${DESTDIR}
-    SQF_FILE=root-image.sqfs
-    run_mount_sqf
-    run_cp
-    run_umount_sqf
-    echo $? > /tmp/.install-retcode
-    if [ $(cat /tmp/.install-retcode) -ne 0 ]; then echo -e "\n${_installationfail}" >>/tmp/rsyncerror.log
-    else echo -e "\n => Root-Image: ${_installationsuccess}" >>/tmp/rsyncerror.log
-    fi
-
-    #rsync -av --progress /source/de-image ${DESTDIR}
-    CP_SOURCE=/source/${DESKTOP_IMG}
-    mkdir -p ${CP_SOURCE}
-    CP_TARGET=${DESTDIR}
-    SQF_FILE=${DESKTOP_IMG}.sqfs
-    run_mount_sqf
-    run_cp
-    run_umount_sqf
-    echo $? > /tmp/.install-retcode
-    if [ $(cat /tmp/.install-retcode) -ne 0 ]; then echo -e "\n${_installationfail}" >>/tmp/rsyncerror.log
-    else echo -e "\n => ${DESKTOP}-Image: ${_installationsuccess}" >>/tmp/rsyncerror.log
-    fi
-
-    # finished, display scrollable output
-    local _result=''
-    if [ $(cat /tmp/.install-retcode) -ne 0 ]; then
-      _result="${_installationfail}"
-      BREAK="break"
-    else
-      _result="${_installationsuccess}"
-    fi
-    rm /tmp/.install-retcode
-
-    DIALOG --title "$_result" --exit-label "${_continue_label}" \
-        --textbox "/tmp/rsyncerror.log" 18 60 || return 1
-
-    # ensure the disk is synced
-    sync
-
-    if [ "${BREAK}" = "break" ]; then
-       break
-    fi
-
-    S_INSTALL=1
-    NEXTITEM=4
-
-    # automagic time!
-    # any automatic configuration should go here
-    DIALOG --infobox "${_configuringsystem}" 6 40
-    sleep 3
-
-    hd_config
-    auto_fstab
-    _system_is_installed=1
-}
-
-installsystem(){
-    SQFPARAMETER=""
-#    DIALOG --defaultno --yesno "${_installchoice}" 0 0 && SQFPARAMETER="yes"
-#    if [[ "${SQFPARAMETER}" == "yes" ]]; then
-#       installsystem_unsquash
-#    else
-       installsystem_cp
-#    fi
-}
-
-set_language(){
-    if [[ -e /opt/livecd/lg ]]; then
-        /opt/livecd/lg --setup
-    else
-        DIALOG --msgbox "Error:\nlg script not found, aborting language setting" 0 0
-    fi
-}
-
-set_keyboard(){
-    if [[ -e /opt/livecd/km ]]; then
-        /opt/livecd/km --setup
-    else
-        DIALOG --msgbox "Error:\nkm script not found, aborting keyboard and console setting" 0 0
-    fi
-}
-
-set_clock(){
-    # utc or local?
-    DIALOG --menu "${_machinetimezone}" 10 72 2 \
-        "UTC" " " \
-        "localtime" " " \
-        2>${ANSWER} || return 1
-    HARDWARECLOCK=$(cat ${ANSWER})
-
-    # timezone?
-    REGIONS=""
-    for i in $(grep '^[A-Z]' /usr/share/zoneinfo/zone.tab | cut -f 3 | sed -e 's#/.*##g'| sort -u); do
-      REGIONS="$REGIONS $i -"
-    done
-    region=""
-    zone=""
-    while [ -z "$zone" ];do
-      region=""
-      while [ -z "$region" ];do
-        :>${ANSWER}
-        DIALOG --menu "${_selectregion}" 0 0 0 $REGIONS 2>${ANSWER}
-        region=$(cat ${ANSWER})
-      done
-      ZONES=""
-      for i in $(grep '^[A-Z]' /usr/share/zoneinfo/zone.tab | grep $region/ | cut -f 3 | sed -e "s#$region/##g"| sort -u); do
-        ZONES="$ZONES $i -"
-      done
-      :>${ANSWER}
-      DIALOG --menu "${_selecttimezone}" 0 0 0 $ZONES 2>${ANSWER}
-      zone=$(cat ${ANSWER})
-    done
-    TIMEZONE="$region/$zone"
-
-    # set system clock from hwclock - stolen from rc.sysinit
-    local HWCLOCK_PARAMS=""
-
-
-    if [[ -e /run/openrc ]];then
-	local _conf_clock='clock="'${HARDWARECLOCK}'"'
-	sed -i -e "s|^.*clcok=.*|${_conf_clock}|" /etc/conf.d/hwclock
-    fi
-    if [ "$HARDWARECLOCK" = "UTC" ]; then
-	HWCLOCK_PARAMS="$HWCLOCK_PARAMS --utc"
-    else
-	HWCLOCK_PARAMS="$HWCLOCK_PARAMS --localtime"
-	if [[ -e /run/systemd ]];then
-	    echo "0.0 0.0 0.0" > /etc/adjtime &> /dev/null
-	    echo "0" >> /etc/adjtime &> /dev/null
-	    echo "LOCAL" >> /etc/adjtime &> /dev/null
-	fi
-    fi
-    if [ "$TIMEZONE" != "" -a -e "/usr/share/zoneinfo/$TIMEZONE" ]; then
-        /bin/rm -f /etc/localtime
-        #/bin/cp "/usr/share/zoneinfo/$TIMEZONE" /etc/localtime
-        ln -sf "/usr/share/zoneinfo/$TIMEZONE" /etc/localtime
-    fi
-    /usr/bin/hwclock --hctosys $HWCLOCK_PARAMS --noadjfile
-
-    if [[ -e /run/openrc ]];then
-	echo "${TIMEZONE}" > /etc/timezone
-    fi
-
-    # display and ask to set date/time
-    DIALOG --calendar "${_choosedatetime}" 0 0 0 0 0 2> ${ANSWER} || return 1
-    local _date="$(cat ${ANSWER})"
-    DIALOG --timebox "${_choosehourtime}" 0 0 2> ${ANSWER} || return 1
-    local _time="$(cat ${ANSWER})"
-    echo "date: $_date time: $_time" >$LOG
-
-    # save the time
-    # DD/MM/YYYY hh:mm:ss -> YYYY-MM-DD hh:mm:ss
-    local _datetime="$(echo "$_date" "$_time" | sed 's#\(..\)/\(..\)/\(....\) \(..\):\(..\):\(..\)#\3-\2-\1 \4:\5:\6#g')"
-    echo "setting date to: $_datetime" >$LOG
-    date -s "$_datetime" 2>&1 >$LOG
-    /usr/bin/hwclock --systohc $HWCLOCK_PARAMS --noadjfile
-
-    S_CLOCK=1
-    NEXTITEM="2"
-}
 
 dogrub_mkconfig(){
     chroot_mount
@@ -719,135 +550,6 @@ dogrub_mkconfig(){
     chroot ${DESTDIR} grub-mkconfig -o "/${GRUB_PREFIX_DIR}/grub.cfg" >> /tmp/grub.log 2>&1
 
     chroot_umount
-}
-
-set_passwd(){
-	# trap tmp-file for passwd
-	trap "rm -f ${ANSWER}" 0 1 2 5 15
-	# get password
-	DIALOG --title "$_passwdtitle" \
-		--clear \
-		--insecure \
-		--passwordbox "$_passwddl $PASSWDUSER" 10 30 2> ${ANSWER}
-	PASSWD="$(cat ${ANSWER})"
-	DIALOG --title "$_passwdtitle" \
-		--clear \
-		--insecure \
-		--passwordbox "$_passwddl2 $PASSWDUSER" 10 30 2> ${ANSWER}
-	PASSWD2="$(cat ${ANSWER})"
-	if [ "$PASSWD" == "$PASSWD2" ]; then
-		PASSWD=$PASSWD
-		_passwddl=$_passwddl1
-    else
-		_passwddl=$_passwddl3
-		set_passwd
-    fi
-}
-
-setup_user(){
-   # addgroups="video,audio,power,disk,storage,optical,network,lp,scanner"
-    DIALOG --inputbox "${_enterusername}" 10 65 "${username2}" 2>${ANSWER} || return 1
-    REPLY="$(cat ${ANSWER})"
-    while [ -z "$(echo $REPLY |grep -E '^[a-z_][a-z0-9_-]*[$]?$')" ];do
-       DIALOG --inputbox "${_givecorrectname}" 10 65 "${username2}" 2>${ANSWER} || return 1
-       REPLY="$(cat ${ANSWER})"
-    done
-
-    chroot ${DESTDIR} useradd -m -p "" -g users -G ${addgroups} $REPLY
-
-    PASSWDUSER="$REPLY"
-
-    if [ -d "${DESTDIR}/var/lib/AccountsService/users" ] ; then
-       echo "[User]" > ${DESTDIR}/var/lib/AccountsService/users/$PASSWDUSER
-       if [ -e "/usr/bin/startxfce4" ] ; then
-          echo "XSession=xfce" >> ${DESTDIR}/var/lib/AccountsService/users/$PASSWDUSER
-       fi
-       if [ -e "/usr/bin/cinnamon-session" ] ; then
-          echo "XSession=cinnamon" >> ${DESTDIR}/var/lib/AccountsService/users/$PASSWDUSER
-       fi
-       if [ -e "/usr/bin/mate-session" ] ; then
-          echo "XSession=mate" >> ${DESTDIR}/var/lib/AccountsService/users/$PASSWDUSER
-       fi
-       if [ -e "/usr/bin/enlightenment_start" ] ; then
-          echo "XSession=enlightenment" >> ${DESTDIR}/var/lib/AccountsService/users/$PASSWDUSER
-       fi
-       if [ -e "/usr/bin/openbox-session" ] ; then
-          echo "XSession=openbox" >> ${DESTDIR}/var/lib/AccountsService/users/$PASSWDUSER
-       fi
-       if [ -e "/usr/bin/startlxde" ] ; then
-          echo "XSession=LXDE" >> ${DESTDIR}/var/lib/AccountsService/users/$PASSWDUSER
-       fi
-       if [ -e "/usr/bin/lxqt-session" ] ; then
-          echo "XSession=LXQt" >> ${DESTDIR}/var/lib/AccountsService/users/$PASSWDUSER
-       fi
-       echo "Icon=" >> ${DESTDIR}/var/lib/AccountsService/users/$PASSWDUSER
-    fi
-
-    if DIALOG --yesno "${_addsudouserdl1}${REPLY}${_addsudouserdl2}" 6 40;then
-       echo "${PASSWDUSER}     ALL=(ALL) ALL" >> ${DESTDIR}/etc/sudoers
-    fi
-    sed -i -e 's|# %wheel ALL=(ALL) ALL|%wheel ALL=(ALL) ALL|g' ${DESTDIR}/etc/sudoers
-    chmod 0440 ${DESTDIR}/etc/sudoers
-    set_passwd
-    echo "$PASSWDUSER:$PASSWD" | chroot ${DESTDIR} chpasswd
-    NEXTITEM="Setup-User"
-    DONE_CONFIG=1
-}
-
-config_system(){
-    DONE=0
-    NEXTITEM=""
-    while [[ "${DONE}" = "0" ]]; do
-        if [[ -n "${NEXTITEM}" ]]; then
-            DEFAULT="--default-item ${NEXTITEM}"
-        else
-            DEFAULT=""
-        fi
-        if [[ -e /run/systemd ]]; then
-			DIALOG $DEFAULT --menu "Configuration" 17 78 10 \
-				"/etc/fstab"                "${_fstabtext}" \
-				"/etc/mkinitcpio.conf"      "${_mkinitcpioconftext}" \
-				"/etc/resolv.conf"          "${_resolvconftext}" \
-				"/etc/hostname"             "${_hostnametext}" \
-				"/etc/hosts"                "${_hoststext}" \
-				"/etc/hosts.deny"           "${_hostsdenytext}" \
-				"/etc/hosts.allow"          "${_hostsallowtext}" \
-				"/etc/locale.gen"           "${_localegentext}" \
-				"/etc/locale.conf"           "${_localeconftext}" \
-				"/etc/environment"           "${_environmenttext}" \
-				"/etc/pacman.d/mirrorlist"  "${_mirrorlisttext}" \
-				"/etc/X11/xorg.conf.d/10-evdev.conf"  "${_xorgevdevconftext}" \
-				"/etc/keyboard.conf"        "${_vconsoletext}" \
-				"${_return_label}"        "${_return_label}" 2>${ANSWER} || NEXTITEM="${_return_label}"
-			NEXTITEM="$(cat ${ANSWER})"
-        else
-			DIALOG $DEFAULT --menu "Configuration" 17 78 10 \
-				"/etc/fstab"                "${_fstabtext}" \
-				"/etc/mkinitcpio.conf"      "${_mkinitcpioconftext}" \
-				"/etc/resolv.conf"          "${_resolvconftext}" \
-				"/etc/rc.conf"              "${_rcconfigtext}" \
-				"/etc/conf.d/hostname"      "${_hostnametext}" \
-				"/etc/conf.d/keymaps"       "${_localeconftext}" \
-				"/etc/conf.d/modules"       "${_modulesconftext}" \
-				"/etc/conf.d/hwclock"       "${_hwclockconftext}" \
-				"/etc/conf.d/xdm"           "${_xdmconftext}" \
-				"/etc/hosts"                "${_hoststext}" \
-				"/etc/hosts.deny"           "${_hostsdenytext}" \
-				"/etc/hosts.allow"          "${_hostsallowtext}" \
-				"/etc/locale.gen"           "${_localegentext}" \
-				"/etc/environment"          "${_environmenttext}" \
-				"/etc/pacman.d/mirrorlist"  "${_mirrorlisttext}" \
-				"/etc/X11/xorg.conf.d/10-evdev.conf"  "${_xorgevdevconftext}" \
-				"${_return_label}"        "${_return_label}" 2>${ANSWER} || NEXTITEM="${_return_label}"
-			NEXTITEM="$(cat ${ANSWER})"
-        fi
-
-        if [ "${NEXTITEM}" = "${_return_label}" -o -z "${NEXTITEM}" ]; then       # exit
-           DONE=1
-        else
-           $EDITOR ${DESTDIR}${NEXTITEM}
-        fi
-    done
 }
 
 _rm_kalu(){
@@ -938,12 +640,6 @@ _post_process(){
 
 # Disable swap and all mounted partitions for the destination system. Unmount
 # the destination root partition last!
-_umountall(){
-    DIALOG --infobox "$_umountingall" 0 0
-    swapoff -a >/dev/null 2>&1
-    umount $(mount | grep -v "${DESTDIR} " | grep "${DESTDIR}" | sed 's|\ .*||g') >/dev/null 2>&1
-    umount $(mount | grep "${DESTDIR} " | sed 's|\ .*||g') >/dev/null 2>&1
-}
 
 # Umount all mounted partitions
 _umounthdds(){
@@ -1026,6 +722,7 @@ activate_luks(){
 # activate special devices:
 # activate dmraid, lvm2 and raid devices, if not already activated during bootup!
 # run it more times if needed, it can be hidden by each other!
+
 activate_special_devices(){
     ACTIVATE_RAID=""
     ACTIVATE_LUKS=""
@@ -1051,34 +748,6 @@ destdir_mounts(){
         DIALOG --msgbox "${_destdir_1}${DESTDIR}${_destdir_2}" 0 0
         mountpoints || return 1
     fi
-}
-
-# lists default linux blockdevices
-default_blockdevices(){
-    # ide devices
-    for dev in $(ls ${block} 2>/dev/null | egrep '^hd'); do
-        if [[ "$(cat ${block}/${dev}/device/media)" = "disk" ]]; then
-            if ! [[ "$(cat ${block}/${dev}/size)" = "0" ]]; then
-                if ! [[ "$(cat /proc/mdstat 2>/dev/null | grep "${dev}\[")" || "$(dmraid -rc | grep /dev/${dev})" ]]; then
-                    echo "/dev/${dev}"
-                    [[ "${1}" ]] && echo ${1}
-                fi
-            fi
-        fi
-    done
-    #scsi/sata devices, and virtio blockdevices (/dev/vd*)
-    for dev in $(ls ${block} 2>/dev/null | egrep '^[sv]d'); do
-        # virtio device doesn't have type file!
-        blktype="$(cat ${block}/${dev}/device/type 2>/dev/null)"
-        if ! [[ "${blktype}" = "5" ]]; then
-            if ! [[ "$(cat ${block}/${dev}/size)" = "0" ]]; then
-                if ! [[ "$(cat /proc/mdstat 2>/dev/null | grep "${dev}\[")" || "$(dmraid -rc | grep /dev/${dev})" ]]; then
-                    echo "/dev/${dev}"
-                    [[ "${1}" ]] && echo ${1}
-                fi
-            fi
-        fi
-    done
 }
 
 # lists additional linux blockdevices
@@ -1423,36 +1092,6 @@ geteditor(){
     fi
 }
 
-# set device name scheme
-set_device_name_scheme(){
-    NAME_SCHEME_PARAMETER=""
-    NAME_SCHEME_LEVELS=""
-    MENU_DESC_TEXT=""
-
-    # check if gpt/guid formatted disks are there
-    find_gpt
-
-    ## util-linux root=PARTUUID=/root=PARTLABEL= support - https://git.kernel.org/?p=utils/util-linux/util-linux.git;a=commitdiff;h=fc387ee14c6b8672761ae5e67ff639b5cae8f27c;hp=21d1fa53f16560dacba33fffb14ffc05d275c926
-    ## mkinitcpio's init root=PARTUUID= support - https://projects.archlinux.org/mkinitcpio.git/tree/init_functions#n185
-
-    if [[ "${GUID_DETECTED}" == "1" ]]; then
-        NAME_SCHEME_LEVELS="${NAME_SCHEME_LEVELS} PARTUUID PARTUUID=<partuuid> PARTLABEL PARTLABEL=<partlabel>"
-        MENU_DESC_TEXT="${_menu_descg}"
-    fi
-
-    NAME_SCHEME_LEVELS="${NAME_SCHEME_LEVELS} FSUUID UUID=<uuid> FSLABEL LABEL=<label> KERNEL /dev/<kernelname>"
-    DIALOG --menu "${_device_name_scheme_1}${MENU_DESC_TEXT}${_device_name_scheme_2}" 15 70 9 ${NAME_SCHEME_LEVELS} 2>${ANSWER} || return 1
-    NAME_SCHEME_PARAMETER=$(cat ${ANSWER})
-    NAME_SCHEME_PARAMETER_RUN="1"
-}
-
-# set GUID (gpt) usage
-set_guid(){
-    ## Lenovo BIOS-GPT issues - Arch Forum - https://bbs.archlinux.org/viewtopic.php?id=131149 , https://bbs.archlinux.org/viewtopic.php?id=133330 , https://bbs.archlinux.org/viewtopic.php?id=138958
-    ## Lenovo BIOS-GPT issues - in Fedora - https://bugzilla.redhat.com/show_bug.cgi?id=735733, https://bugzilla.redhat.com/show_bug.cgi?id=749325 , http://git.fedorahosted.org/git/?p=anaconda.git;a=commit;h=ae74cebff312327ce2d9b5ac3be5dbe22e791f09
-    GUIDPARAMETER=""
-    DIALOG --defaultno --yesno "${_gptinfo}" 0 0 && GUIDPARAMETER="yes"
-}
 
 # Get a list of available disks for use in the "Available disks" dialogs. This
 # will print the mountpoints as follows, getting size info from /sys:
@@ -1515,105 +1154,8 @@ _getavailpartitions(){
     done
 }
 
-# Disable all software raid devices
-_stopmd(){
-    if [[ "$(cat /proc/mdstat 2>/dev/null | grep ^md)" ]]; then
-        DISABLEMD=""
-        DIALOG --defaultno --yesno "${_stop_md}" 0 0 && DISABLEMD="1"
-        if [[ "${DISABLEMD}" = "1" ]]; then
-            DIALOG --infobox "${_disable_raid}" 0 0
-            for i in $(cat /proc/mdstat 2>/dev/null | grep ^md | sed -e 's# :.*##g'); do
-                mdadm --manage --stop /dev/${i} > ${LOG}
-            done
-            DIALOG --infobox "${_clear_superblock}" 0 0
-            for i in $(${_BLKID} | grep "TYPE=\"linux_raid_member\"" | sed -e 's#:.*##g'); do
-                mdadm --zero-superblock ${i} > ${LOG}
-            done
-        fi
-    fi
-    DISABLEMDSB=""
-    if [[ "$(${_BLKID} | grep "TYPE=\"linux_raid_member\"")" ]]; then
-        DIALOG --defaultno --yesno "${_setup_superblock}" 0 0 && DISABLEMDSB="1"
-        if [[ "${DISABLEMDSB}" = "1" ]]; then
-            DIALOG --infobox "${_clean_superblock}" 0 0
-            for i in $(${_BLKID} | grep "TYPE=\"linux_raid_member\"" | sed -e 's#:.*##g'); do
-                mdadm --zero-superblock ${i} > ${LOG}
-            done
-        fi
-    fi
-}
-
-# Disable all lvm devices
-_stoplvm(){
-    DISABLELVM=""
-    DETECTED_LVM=""
-    LV_VOLUMES="$(lvs -o vg_name,lv_name --noheading --separator - 2>/dev/null)"
-    LV_GROUPS="$(vgs -o vg_name --noheading 2>/dev/null)"
-    LV_PHYSICAL="$(pvs -o pv_name --noheading 2>/dev/null)"
-    ! [[ "${LV_VOLUMES}" = "" ]] && DETECTED_LVM=1
-    ! [[ "${LV_GROUPS}" = "" ]] && DETECTED_LVM=1
-    ! [[ "${LV_PHYSICAL}" = "" ]] && DETECTED_LVM=1
-    if [[ "${DETECTED_LVM}" = "1" ]]; then
-        DIALOG --defaultno --yesno "${_stoplvm}" 0 0 && DISABLELVM="1"
-    fi
-    if [[ "${DISABLELVM}" = "1" ]]; then
-        DIALOG --infobox "${_remove_lvm}" 0 0
-        for i in ${LV_VOLUMES}; do
-            lvremove -f /dev/mapper/${i} 2>/dev/null> ${LOG}
-        done
-        DIALOG --infobox "${_remove_lvg}" 0 0
-        for i in ${LV_GROUPS}; do
-            vgremove -f ${i} 2>/dev/null > ${LOG}
-        done
-        DIALOG --infobox "${_remove_pvm}" 0 0
-        for i in ${LV_PHYSICAL}; do
-            pvremove -f ${i} 2>/dev/null > ${LOG}
-        done
-    fi
-}
 
 # Disable all luks encrypted devices
-_stopluks(){
-    DISABLELUKS=""
-    DETECTED_LUKS=""
-    LUKSDEVICE=""
-
-    # detect already running luks devices
-    LUKS_DEVICES="$(ls /dev/mapper/ | grep -v control)"
-    for i in ${LUKS_DEVICES}; do
-        cryptsetup status ${i} 2>/dev/null && LUKSDEVICE="${LUKSDEVICE} ${i}"
-    done
-    ! [[ "${LUKSDEVICE}" = "" ]] && DETECTED_LUKS=1
-    if [[ "${DETECTED_LUKS}" = "1" ]]; then
-        DIALOG --defaultno --yesno "${_stopluks}" 0 0 && DISABLELUKS="1"
-    fi
-    if [[ "${DISABLELUKS}" = "1" ]]; then
-        DIALOG --infobox "${_removeluks}" 0 0
-        for i in ${LUKSDEVICE}; do
-            LUKS_REAL_DEVICE="$(echo $(cryptsetup status ${i} | grep device: | sed -e 's#device:##g'))"
-            cryptsetup remove ${i} > ${LOG}
-            # delete header from device
-            dd if=/dev/zero of=${LUKS_REAL_DEVICE} bs=512 count=2048 >/dev/null 2>&1
-        done
-    fi
-
-    DISABLELUKS=""
-    DETECTED_LUKS=""
-
-    # detect not running luks devices
-    [[ "$(${_BLKID} | grep "TYPE=\"crypto_LUKS\"")" ]] && DETECTED_LUKS=1
-    if [[ "${DETECTED_LUKS}" = "1" ]]; then
-        DIALOG --defaultno --yesno "${_stoprluks}" 0 0 && DISABLELUKS="1"
-    fi
-    if [[ "${DISABLELUKS}" = "1" ]]; then
-        DIALOG --infobox "${_removerluks}" 0 0
-        for i in $(${_BLKID} | grep "TYPE=\"crypto_LUKS\"" | sed -e 's#:.*##g'); do
-            # delete header from device
-            dd if=/dev/zero of=${i} bs=512 count=2048 >/dev/null 2>&1
-        done
-    fi
-    [[ -e /tmp/.crypttab ]] && rm /tmp/.crypttab
-}
 
 #_dmraid_update
 _dmraid_update(){
@@ -2201,211 +1743,6 @@ _luks(){
     _opening_luks
 }
 
-autoprepare(){
-    # check on encrypted devices, else weird things can happen!
-    _stopluks
-    # check on raid devices, else weird things can happen during partitioning!
-    _stopmd
-    # check on lvm devices, else weird things can happen during partitioning!
-    _stoplvm
-    NAME_SCHEME_PARAMETER_RUN=""
-    # switch for mbr usage
-    set_guid
-    DISCS=$(default_blockdevices)
-    if [[ "$(echo ${DISCS} | wc -w)" -gt 1 ]]; then
-        DIALOG --msgbox "Available Disks:\n\n$(_getavaildisks)\n" 0 0
-        DIALOG --menu "Select the hard drive to use" 14 55 7 $(default_blockdevices _) 2>${ANSWER} || return 1
-        DISC=$(cat ${ANSWER})
-    else
-        DISC=${DISCS}
-    fi
-    DEFAULTFS=""
-    BOOT_PART_SET=""
-    SWAP_PART_SET=""
-    ROOT_PART_SET=""
-    CHOSEN_FS=""
-    # get just the disk size in 1000*1000 MB
-    if [[ "$(cat ${block}/$(basename ${DISC} 2>/dev/null)/size 2>/dev/null)" ]]; then
-        DISC_SIZE="$(($(expr $(cat ${block}/$(basename ${DISC})/queue/logical_block_size) '*' $(cat ${block}/$(basename ${DISC})/size))/1000000))"
-    else
-        DIALOG --msgbox "ERROR: Setup cannot detect size of your device, please use normal installation routine for partitioning and mounting devices." 0 0
-        return 1
-    fi
-    while [[ "${DEFAULTFS}" = "" ]]; do
-        FSOPTS=""
-        [[ "$(which mkfs.ext2 2>/dev/null)" ]] && FSOPTS="${FSOPTS} ext2 Ext2"
-        [[ "$(which mkfs.ext3 2>/dev/null)" ]] && FSOPTS="${FSOPTS} ext3 Ext3"
-        [[ "$(which mkfs.ext4 2>/dev/null)" ]] && FSOPTS="${FSOPTS} ext4 Ext4"
-        [[ "$(which mkfs.btrfs 2>/dev/null)" ]] && FSOPTS="${FSOPTS} btrfs Btrfs-(Experimental)"
-        [[ "$(which mkfs.nilfs2 2>/dev/null)" ]] && FSOPTS="${FSOPTS} nilfs2 Nilfs2-(Experimental)"
-        [[ "$(which mkreiserfs 2>/dev/null)" ]] && FSOPTS="${FSOPTS} reiserfs Reiser3"
-        [[ "$(which mkfs.xfs 2>/dev/null)" ]] && FSOPTS="${FSOPTS} xfs XFS"
-        [[ "$(which mkfs.jfs 2>/dev/null)" ]] && FSOPTS="${FSOPTS} jfs JFS"
-        # create 1 MB bios_grub partition for grub-bios GPT support
-        if [[ "${GUIDPARAMETER}" = "yes" ]]; then
-            GUID_PART_SIZE="2"
-            GPT_BIOS_GRUB_PART_SIZE="${GUID_PART_SIZE}"
-            UEFISYS_PART_SIZE="512"
-        else
-            GUID_PART_SIZE="0"
-            UEFISYS_PART_SIZE="0"
-        fi
-        DISC_SIZE=$((${DISC_SIZE}-${GUID_PART_SIZE}-${UEFISYS_PART_SIZE}))
-        while [[ "${BOOT_PART_SET}" = "" ]]; do
-            DIALOG --inputbox "Enter the size (MB) of your /boot partition,\nMinimum value is 150.\n\nDisk space left: ${DISC_SIZE} MB" 10 65 "512" 2>${ANSWER} || return 1
-            BOOT_PART_SIZE="$(cat ${ANSWER})"
-            if [[ "${BOOT_PART_SIZE}" = "" ]]; then
-                DIALOG --msgbox "ERROR: You have entered a invalid size, please enter again." 0 0
-            else
-                if [[ "${BOOT_PART_SIZE}" -ge "${DISC_SIZE}" || "${BOOT_PART_SIZE}" -lt "150" || "${SBOOT_PART_SIZE}" = "${DISC_SIZE}" ]]; then
-                    DIALOG --msgbox "ERROR: You have entered an invalid size, please enter again." 0 0
-                else
-                    BOOT_PART_SET=1
-                fi
-            fi
-        done
-        DISC_SIZE=$((${DISC_SIZE}-${BOOT_PART_SIZE}))
-        SWAP_SIZE="256"
-        [[ "${DISC_SIZE}" -lt "256" ]] && SWAP_SIZE="${DISC_SIZE}"
-        while [[ "${SWAP_PART_SET}" = "" ]]; do
-            DIALOG --inputbox "Enter the size (MB) of your swap partition,\nMinimum value is > 0.\n\nDisk space left: ${DISC_SIZE} MB" 10 65 "${SWAP_SIZE}" 2>${ANSWER} || return 1
-            SWAP_PART_SIZE=$(cat ${ANSWER})
-            if [[ "${SWAP_PART_SIZE}" = "" || "${SWAP_PART_SIZE}" = "0" ]]; then
-                DIALOG --msgbox "ERROR: You have entered an invalid size, please enter again." 0 0
-            else
-                if [[ "${SWAP_PART_SIZE}" -ge "${DISC_SIZE}" ]]; then
-                    DIALOG --msgbox "ERROR: You have entered a too large size, please enter again." 0 0
-                else
-                    SWAP_PART_SET=1
-                fi
-            fi
-        done
-        DISC_SIZE=$((${DISC_SIZE}-${SWAP_PART_SIZE}))
-        ROOT_SIZE="6400"
-        [[ "${DISC_SIZE}" -lt "6400" ]] && ROOT_SIZE="${DISC_SIZE}"
-        while [[ "${ROOT_PART_SET}" = "" ]]; do
-        DIALOG --inputbox "Enter the size (MB) of your / partition,\nthe /home partition will use the remaining space.\n\nDisk space left:  ${DISC_SIZE} MB" 10 65 "${ROOT_SIZE}" 2>${ANSWER} || return 1
-        ROOT_PART_SIZE=$(cat ${ANSWER})
-            if [[ "${ROOT_PART_SIZE}" = "" || "${ROOT_PART_SIZE}" = "0" ]]; then
-                DIALOG --msgbox "ERROR: You have entered an invalid size, please enter again." 0 0
-            else
-                if [[ "${ROOT_PART_SIZE}" -ge "${DISC_SIZE}" ]]; then
-                    DIALOG --msgbox "ERROR: You have entered a too large size, please enter again." 0 0
-                else
-                    DIALOG --yesno "$((${DISC_SIZE}-${ROOT_PART_SIZE})) MB will be used for your /home partition. Is this OK?" 0 0 && ROOT_PART_SET=1
-                fi
-            fi
-        done
-        while [[ "${CHOSEN_FS}" = "" ]]; do
-            DIALOG --menu "Select a filesystem for / and /home:" 16 45 8 ${FSOPTS} 2>${ANSWER} || return 1
-            FSTYPE=$(cat ${ANSWER})
-            DIALOG --yesno "${FSTYPE} will be used for / and /home. Is this OK?" 0 0 && CHOSEN_FS=1
-        done
-        DEFAULTFS=1
-    done
-    DIALOG --defaultno --yesno "${DISC} will be COMPLETELY ERASED!  Are you absolutely sure?" 0 0 \
-    || return 1
-    DEVICE=${DISC}
-
-    # validate DEVICE
-    if [[ ! -b "${DEVICE}" ]]; then
-      DIALOG --msgbox "Device '${DEVICE}' is not valid" 0 0
-      return 1
-    fi
-
-    # validate DEST
-    if [[ ! -d "${DESTDIR}" ]]; then
-        DIALOG --msgbox "Destination directory '${DESTDIR}' is not valid" 0 0
-        return 1
-    fi
-
-    [[ -e /tmp/.fstab ]] && rm -f /tmp/.fstab
-    # disable swap and all mounted partitions, umount / last!
-    _umountall
-    # we assume a /dev/hdX format (or /dev/sdX)
-    if [[ "${GUIDPARAMETER}" == "yes" ]]; then
-        PART_ROOT="${DEVICE}5"
-        # GPT (GUID) is supported only by 'parted' or 'sgdisk'
-        printk off
-        DIALOG --infobox "Partitioning ${DEVICE}" 0 0
-        # clean partition table to avoid issues!
-        sgdisk --zap ${DEVICE} &>/dev/null
-        # clear all magic strings/signatures - mdadm, lvm, partition tables etc.
-        dd if=/dev/zero of=${DEVICE} bs=512 count=2048 &>/dev/null
-        wipefs -a ${DEVICE} &>/dev/null
-        # create fresh GPT
-        sgdisk --clear ${DEVICE} &>/dev/null
-        # create actual partitions
-        sgdisk --set-alignment="2048" --new=1:1M:+${GPT_BIOS_GRUB_PART_SIZE}M --typecode=1:EF02 --change-name=1:BIOS_GRUB ${DEVICE} > ${LOG}
-        sgdisk --set-alignment="2048" --new=2:+1M:+${UEFISYS_PART_SIZE}M --typecode=2:EF00 --change-name=2:UEFI_SYSTEM ${DEVICE} > ${LOG}
-        sgdisk --set-alignment="2048" --new=3:+1M:+${BOOT_PART_SIZE}M --typecode=3:8300 --attributes=3:set:2 --change-name=3:MANJARO_BOOT ${DEVICE} > ${LOG}
-        sgdisk --set-alignment="2048" --new=4:+1M:+${SWAP_PART_SIZE}M --typecode=4:8200 --change-name=4:MANJARO_SWAP ${DEVICE} > ${LOG}
-        sgdisk --set-alignment="2048" --new=5:+1M:+${ROOT_PART_SIZE}M --typecode=5:8300 --change-name=5:MANJARO_ROOT ${DEVICE} > ${LOG}
-        sgdisk --set-alignment="2048" --new=6:+1M:0 --typecode=6:8300 --change-name=6:MANJARO_HOME ${DEVICE} > ${LOG}
-        sgdisk --print ${DEVICE} > ${LOG}
-    else
-        PART_ROOT="${DEVICE}3"
-        # start at sector 1 for 4k drive compatibility and correct alignment
-        printk off
-        DIALOG --infobox "Partitioning ${DEVICE}" 0 0
-        # clean partitiontable to avoid issues!
-        dd if=/dev/zero of=${DEVICE} bs=512 count=2048 >/dev/null 2>&1
-        wipefs -a ${DEVICE} &>/dev/null
-        # create DOS MBR with parted
-        parted -a optimal -s ${DEVICE} unit MiB mktable msdos >/dev/null 2>&1
-        parted -a optimal -s ${DEVICE} unit MiB mkpart primary 1 $((${GUID_PART_SIZE}+${BOOT_PART_SIZE})) >${LOG}
-        parted -a optimal -s ${DEVICE} unit MiB set 1 boot on >${LOG}
-        parted -a optimal -s ${DEVICE} unit MiB mkpart primary $((${GUID_PART_SIZE}+${BOOT_PART_SIZE}+1)) $((${GUID_PART_SIZE}+${BOOT_PART_SIZE}+${SWAP_PART_SIZE}+1)) >${LOG}
-        parted -a optimal -s ${DEVICE} unit MiB mkpart primary $((${GUID_PART_SIZE}+${BOOT_PART_SIZE}+${SWAP_PART_SIZE}+2)) $((${GUID_PART_SIZE}+${BOOT_PART_SIZE}+${SWAP_PART_SIZE}+${ROOT_PART_SIZE}+2)) >${LOG}
-        parted -a optimal -s ${DEVICE} unit MiB mkpart primary $((${GUID_PART_SIZE}+${BOOT_PART_SIZE}+${SWAP_PART_SIZE}+${ROOT_PART_SIZE}+3)) 100% >${LOG}
-    fi
-    if [[ $? -gt 0 ]]; then
-        DIALOG --msgbox "Error partitioning ${DEVICE} (see ${LOG} for details)" 0 0
-        printk on
-        return 1
-    fi
-    printk on
-    ## wait until /dev initialized correct devices
-    udevadm settle
-
-    if [[ "${NAME_SCHEME_PARAMETER_RUN}" == "" ]]; then
-        set_device_name_scheme || return 1
-    fi
-    ## FSSPECS - default filesystem specs (the + is bootable flag)
-    ## <partnum>:<mountpoint>:<partsize>:<fstype>[:<fsoptions>][:+]:labelname
-    ## The partitions in FSSPECS list should be listed in the "mountpoint" order.
-    ## Make sure the "root" partition is defined first in the FSSPECS list
-    FSSPECS="3:/:${ROOT_PART_SIZE}:${FSTYPE}:::ROOT_MANJARO 1:/boot:${BOOT_PART_SIZE}:ext2::+:BOOT_MANJARO 4:/home:*:${FSTYPE}:::HOME_MANJARO 2:swap:${SWAP_PART_SIZE}:swap:::SWAP_MANJARO"
-
-    if [[ "${GUIDPARAMETER}" == "yes" ]]; then
-        FSSPECS="5:/:${ROOT_PART_SIZE}:${FSTYPE}:::ROOT_MANJARO 3:/boot:${BOOT_PART_SIZE}:ext2::+:BOOT_MANJARO 2:/boot/efi:512:vfat:-F32::ESP 6:/home:*:${FSTYPE}:::HOME_MANJARO 4:swap:${SWAP_PART_SIZE}:swap:::SWAP_MANJARO"
-    fi
-
-    ## make and mount filesystems
-    for fsspec in ${FSSPECS}; do
-        part="$(echo ${fsspec} | tr -d ' ' | cut -f1 -d:)"
-        mountpoint="$(echo ${fsspec} | tr -d ' ' | cut -f2 -d:)"
-        fstype="$(echo ${fsspec} | tr -d ' ' | cut -f4 -d:)"
-        fsoptions="$(echo ${fsspec} | tr -d ' ' | cut -f5 -d:)"
-        [[ "${fsoptions}" == "" ]] && fsoptions="NONE"
-        labelname="$(echo ${fsspec} | tr -d ' ' | cut -f7 -d:)"
-        btrfsdevices="${DEVICE}${part}"
-        btrfsssd="NONE"
-        btrfscompress="NONE"
-        btrfssubvolume="NONE"
-        btrfslevel="NONE"
-        dosubvolume="no"
-        # if echo "${mountpoint}" | tr -d ' ' | grep '^/$' 2>&1 >/dev/null; then
-        # if [[ "$(echo ${mountpoint} | tr -d ' ' | grep '^/$' | wc -l)" -eq 0 ]]; then
-        DIALOG --infobox "Creating ${fstype} on ${DEVICE}${part}\nwith FSLABEL ${labelname} .\nMountpoint is ${mountpoint} ." 0 0
-        _mkfs yes "${DEVICE}${part}" "${fstype}" "${DESTDIR}" "${mountpoint}" "${labelname}" "${fsoptions}" "${btrfsdevices}" "${btrfssubvolume}" "${btrfslevel}" "${dosubvolume}" "${btrfssd}" "${btrfscompress}" || return 1
-        # fi
-    done
-
-    DIALOG --msgbox "Auto-prepare was successful" 0 0
-    S_MKFSAUTO=1
-}
-
 check_gpt(){
     GUID_DETECTED=""
     [[ "$(${_BLKID} -p -i -o value -s PTTYPE ${DISC})" == "gpt" ]] && GUID_DETECTED="1"
@@ -2494,65 +1831,7 @@ check_uefisyspart(){
 
 }
 
-partition(){
-    # disable swap and all mounted partitions, umount / last!
-    _umountall
-    # check on encrypted devices, else weird things can happen!
-    _stopluks
-    # check on raid devices, else weird things can happen during partitioning!
-    _stopmd
-    # check on lvm devices, else weird things can happen during partitioning!
-    _stoplvm
-    # update dmraid
-    _dmraid_update
-    # switch for mbr usage
-    set_guid
-    # Select disk to partition
-    DISCS=$(finddisks _)
-    DISCS="${DISCS} OTHER _ DONE +"
-    DIALOG --msgbox "Available Disks:\n\n$(_getavaildisks)\n" 0 0
-    DISC=""
-    while true; do
-        # Prompt the user with a list of known disks
-        DIALOG --menu "Select the disk you want to partition\n(select DONE when finished)" 14 55 7 ${DISCS} 2>${ANSWER} || return 1
-        DISC=$(cat ${ANSWER})
-        if [[ "${DISC}" == "OTHER" ]]; then
-            DIALOG --inputbox "Enter the full path to the device you wish to partition" 8 65 "/dev/sda" 2>${ANSWER} || DISC=""
-            DISC=$(cat ${ANSWER})
-        fi
-        # Leave our loop if the user is done partitioning
-        [[ "${DISC}" == "DONE" ]] && break
-        MSDOS_DETECTED=""
-        if ! [[ "${DISC}" == "" ]]; then
-            if [[ "${GUIDPARAMETER}" == "yes" ]]; then
-                CHECK_BIOS_BOOT_GRUB=""
-                CHECK_UEFISYS_PART=""
-                RUN_CGDISK="1"
-                check_gpt
-            else
-                [[ "$(${_BLKID} -p -i -o value -s PTTYPE ${DISC})" == "dos" ]] && MSDOS_DETECTED="1"
 
-                if [[ "${MSDOS_DETECTED}" == "" ]]; then
-                    DIALOG --defaultno --yesno "Setup detected no MS-DOS partition table on ${DISC}.\nDo you want to create a MS-DOS partition table now on ${DISC}?\n\n${DISC} will be COMPLETELY ERASED!  Are you absolutely sure?" 0 0 || return 1
-                    # clean partitiontable to avoid issues!
-                    dd if=/dev/zero of=${DEVICE} bs=512 count=2048 >/dev/null 2>&1
-                    wipefs -a ${DEVICE} /dev/null 2>&1
-                    parted -a optimal -s ${DISC} mktable msdos >${LOG}
-                fi
-                # Partition disc
-                DIALOG --msgbox "Now you'll be put into the parted shell where you can partition your hard drive. You should make a swap partition and as many data partitions as you will need.\n\nShort command list:\n- 'help' to get help text\n- 'print' to show  partition table\n- 'mkpart' for new partition\n- 'rm' for deleting a partition\n- 'quit' to leave parted\n\nNOTE: parted may tell you to reboot after creating partitions.  If you need to reboot, just re-enter this install program, skip this step and go on." 18 70
-                clear
-                ## Use parted for correct alignment, cfdisk does not align correct!
-                parted ${DISC} print
-                parted ${DISC}
-            fi
-        fi
-    done
-    # update dmraid
-    _dmraid_update
-    NEXTITEM="4"
-    S_PART=1
-}
 
 # scan and update btrfs devices
 btrfs_scan(){
@@ -2930,141 +2209,7 @@ create_filesystem(){
     FILESYSTEM_FINISH="yes"
 }
 
-mountpoints(){
-    NAME_SCHEME_PARAMETER_RUN=""
-    while [[ "${PARTFINISH}" != "DONE" ]]; do
-        activate_special_devices
-        : >/tmp/.device-names
-        : >/tmp/.fstab
-        : >/tmp/.parts
-        #
-        # Select mountpoints
-        #
-        DIALOG --msgbox "Available partitions:\n\n$(_getavailpartitions)\n" 0 0
-        PARTS=$(findpartitions _)
-        DO_SWAP=""
-        while [[ "${DO_SWAP}" != "DONE" ]]; do
-            FSTYPE="swap"
-            DIALOG --menu "Select the partition to use as swap" 21 50 13 NONE - ${PARTS} 2>${ANSWER} || return 1
-            PART=$(cat ${ANSWER})
-            if [[ "${PART}" != "NONE" ]]; then
-                DOMKFS="no"
-                if [[ "${ASK_MOUNTPOINTS}" = "1" ]]; then
-                    create_filesystem
-                else
-                    FILESYSTEM_FINISH="yes"
-                fi
-            else
-                FILESYSTEM_FINISH="yes"
-            fi
-            [[ "${FILESYSTEM_FINISH}" = "yes" ]] && DO_SWAP=DONE
-        done
-        check_mkfs_values
-        if [[ "${PART}" != "NONE" ]]; then
-            PARTS="$(echo ${PARTS} | sed -e "s#${PART}\ _##g")"
-            echo "${PART}:swap:swap:${DOMKFS}:${LABEL_NAME}:${FS_OPTIONS}:${BTRFS_DEVICES}:${BTRFS_LEVEL}:${BTRFS_SUBVOLUME}:${DOSUBVOLUME}:${BTRFS_COMPRESS}:${BTRFS_SSD}" >>/tmp/.parts
-        fi
-        DO_ROOT=""
-        while [[ "${DO_ROOT}" != "DONE" ]]; do
-            DIALOG --menu "Select the partition to mount as /" 21 50 13 ${PARTS} 2>${ANSWER} || return 1
-            PART=$(cat ${ANSWER})
-            PART_ROOT=${PART}
-            # Select root filesystem type
-            FSTYPE="$(${_BLKID} -p -i -o value -s TYPE ${PART})"
-            DOMKFS="no"
-            # clear values first!
-            clear_btrfs_values
-            check_btrfs_filesystem_creation
-            if [[ "${ASK_MOUNTPOINTS}" = "1" && "${SKIP_FILESYSTEM}" = "no" ]]; then
-                select_filesystem && create_filesystem && btrfs_subvolume
-            else
-                btrfs_subvolume
-            fi
-            [[ "${FILESYSTEM_FINISH}" = "yes" ]] && DO_ROOT=DONE
-        done
-        find_btrfs_raid_devices
-        btrfs_parts
-        check_mkfs_values
-        echo "${PART}:${FSTYPE}:/:${DOMKFS}:${LABEL_NAME}:${FS_OPTIONS}:${BTRFS_DEVICES}:${BTRFS_LEVEL}:${BTRFS_SUBVOLUME}:${DOSUBVOLUME}:${BTRFS_COMPRESS}:${BTRFS_SSD}" >>/tmp/.parts
-        ! [[ "${FSTYPE}" = "btrfs" ]] && PARTS="$(echo ${PARTS} | sed -e "s#${PART}\ _##g")"
-        #
-        # Additional partitions
-        #
-        while [[ "${PART}" != "DONE" ]]; do
-            DO_ADDITIONAL=""
-            while [[ "${DO_ADDITIONAL}" != "DONE" ]]; do
-                DIALOG --menu "Select any additional partitions to mount under your new root (select DONE when finished)" 21 52 13 ${PARTS} DONE _ 2>${ANSWER} || return 1
-                PART=$(cat ${ANSWER})
-                if [[ "${PART}" != "DONE" ]]; then
-                    FSTYPE="$(${_BLKID} -p -i  -o value -s TYPE ${PART})"
-                    DOMKFS="no"
-                    # clear values first!
-                    clear_btrfs_values
-                    check_btrfs_filesystem_creation
-                    # Select a filesystem type
-                    if [[ "${ASK_MOUNTPOINTS}" = "1" && "${SKIP_FILESYSTEM}" = "no" ]]; then
-                        enter_mountpoint && select_filesystem && create_filesystem && btrfs_subvolume
-                    else
-                        enter_mountpoint
-                        btrfs_subvolume
-                    fi
-                    check_btrfs_boot_subvolume
-                else
-                    FILESYSTEM_FINISH="yes"
-                fi
-                [[ "${FILESYSTEM_FINISH}" = "yes" ]] && DO_ADDITIONAL="DONE"
-            done
-            if [[ "${PART}" != "DONE" ]]; then
-                find_btrfs_raid_devices
-                btrfs_parts
-                check_mkfs_values
-                echo "${PART}:${FSTYPE}:${MP}:${DOMKFS}:${LABEL_NAME}:${FS_OPTIONS}:${BTRFS_DEVICES}:${BTRFS_LEVEL}:${BTRFS_SUBVOLUME}:${DOSUBVOLUME}:${BTRFS_COMPRESS}:${BTRFS_SSD}" >>/tmp/.parts
-                ! [[ "${FSTYPE}" = "btrfs" ]] && PARTS="$(echo ${PARTS} | sed -e "s#${PART}\ _##g")"
-            fi
-        done
-        DIALOG --yesno "Would you like to create and mount the filesytems like this?\n\nSyntax\n------\nDEVICE:TYPE:MOUNTPOINT:FORMAT:LABEL:FSOPTIONS:BTRFS_DETAILS\n\n$(for i in $(cat /tmp/.parts | sed -e 's, ,#,g'); do echo "${i}\n";done)" 0 0 && PARTFINISH="DONE"
-    done
-    # disable swap and all mounted partitions
-    _umountall
-    if [[ "${NAME_SCHEME_PARAMETER_RUN}" = "" ]]; then
-        set_device_name_scheme || return 1
-    fi
-    printk off
-    for line in $(cat /tmp/.parts); do
-        PART=$(echo ${line} | cut -d: -f 1)
-        FSTYPE=$(echo ${line} | cut -d: -f 2)
-        MP=$(echo ${line} | cut -d: -f 3)
-        DOMKFS=$(echo ${line} | cut -d: -f 4)
-        LABEL_NAME=$(echo ${line} | cut -d: -f 5)
-        FS_OPTIONS=$(echo ${line} | cut -d: -f 6)
-        BTRFS_DEVICES=$(echo ${line} | cut -d: -f 7)
-        BTRFS_LEVEL=$(echo ${line} | cut -d: -f 8)
-        BTRFS_SUBVOLUME=$(echo ${line} | cut -d: -f 9)
-        DOSUBVOLUME=$(echo ${line} | cut -d: -f 10)
-        BTRFS_COMPRESS=$(echo ${line} | cut -d: -f 11)
-        BTRFS_SSD=$(echo ${line} | cut -d: -f 12)
-        if [[ "${DOMKFS}" = "yes" ]]; then
-            if [[ "${FSTYPE}" = "swap" ]]; then
-                DIALOG --infobox "Creating and activating swapspace on ${PART}" 0 0
-            else
-                DIALOG --infobox "Creating ${FSTYPE} on ${PART},\nmounting to ${DESTDIR}${MP}" 0 0
-            fi
-            _mkfs yes ${PART} ${FSTYPE} ${DESTDIR} ${MP} ${LABEL_NAME} ${FS_OPTIONS} ${BTRFS_DEVICES} ${BTRFS_LEVEL} ${BTRFS_SUBVOLUME} ${DOSUBVOLUME} ${BTRFS_COMPRESS} ${BTRFS_SSD} || return 1
-        else
-            if [[ "${FSTYPE}" = "swap" ]]; then
-                DIALOG --infobox "Activating swapspace on ${PART}" 0 0
-            else
-                DIALOG --infobox "Mounting ${FSTYPE} on ${PART} to ${DESTDIR}${MP}" 0 0
-            fi
-            _mkfs no ${PART} ${FSTYPE} ${DESTDIR} ${MP} ${LABEL_NAME} ${FS_OPTIONS} ${BTRFS_DEVICES} ${BTRFS_LEVEL} ${BTRFS_SUBVOLUME} ${DOSUBVOLUME} ${BTRFS_COMPRESS} ${BTRFS_SSD} || return 1
-        fi
-        sleep 1
-    done
-    printk on
-    DIALOG --msgbox "Partitions were successfully mounted." 0 0
-    NEXTITEM="5"
-    S_MKFS=1
-}
+
 
 # _mkfs()
 # Create and mount filesystems in our destination system directory.
@@ -4622,91 +3767,6 @@ dogrub_uefi_i386(){
 
 }
 
-prepare_harddrive(){
-    S_MKFSAUTO=0
-    S_MKFS=0
-    DONE=0
-    NEXTITEM=""
-    CANCEL="1"
-    while [[ "${DONE}" = "0" ]]; do
-        if [[ -n "${NEXTITEM}" ]]; then
-            DEFAULT="--default-item ${NEXTITEM}"
-        else
-            DEFAULT=""
-        fi
-        CANCEL=""
-        dialog ${DEFAULT} --backtitle "${TITLE}" --menu "Prepare Hard Drive" 12 60 5 \
-            "1" "Auto-Prepare (erases the ENTIRE hard drive)" \
-            "2" "Partition Hard Drives" \
-            "3" "Create Software Raid, Lvm2 and Luks encryption" \
-            "4" "Set Filesystem Mountpoints" \
-            "5" "Return to Main Menu" 2>${ANSWER} || CANCEL="1"
-        NEXTITEM="$(cat ${ANSWER})"
-        [[ "${S_MKFSAUTO}" = "1" ]] && DONE=1
-        case $(cat ${ANSWER}) in
-            "1")
-                autoprepare
-                [[ "${S_MKFSAUTO}" = "1" ]] && DONE=1
-                CANCEL="0"
-                _hd_is_prepared=1
-                NEXTITEM="5";;
-            "2")
-                partition ;;
-            "3")
-                create_special ;;
-            "4")
-                PARTFINISH=""
-                ASK_MOUNTPOINTS="1"
-                mountpoints
-                CANCEL="0"
-                _hd_is_prepared=1
-                NEXTITEM="5";;
-            *)
-                DONE=1 ;;
-        esac
-    done
-    if [[ "${CANCEL}" = "1" ]]; then
-        NEXTITEM="2"
-    else
-        NEXTITEM="3"
-    fi
-}
-
-# menu for raid, lvm and encrypt
-create_special(){
-    NEXTITEM=""
-    SPECIALDONE=0
-    while [[ "${SPECIALDONE}" = "0" ]]; do
-        if [[ -n "${NEXTITEM}" ]]; then
-            DEFAULT="--default-item ${NEXTITEM}"
-        else
-            DEFAULT=""
-        fi
-        CANCEL=""
-        dialog ${DEFAULT} --backtitle "${TITLE}" --menu "Create Software Raid, LVM2 and Luks encryption" 14 60 5 \
-            "1" "Create Software Raid" \
-            "2" "Create LVM2" \
-            "3" "Create Luks encryption" \
-            "4" "Return to Previous Menu" 2>${ANSWER} || CANCEL="1"
-        NEXTITEM="$(cat ${ANSWER})"
-        case $(cat ${ANSWER}) in
-            "1")
-                _createmd ;;
-            "2")
-                _createlvm ;;
-            "3")
-                _createluks ;;
-            *)
-                SPECIALDONE=1 ;;
-        esac
-    done
-    if [[ "${CANCEL}" = "1" ]]; then
-        NEXTITEM="3"
-    else
-        NEXTITEM="4"
-    fi
-}
-
 # menu for md creation
 _createmd(){
     NEXTITEM=""
@@ -4859,6 +3919,771 @@ install_bootloader_bios(){
 
 }
 
+install_bootloader_menu(){
+
+    DIALOG --menu "What is your boot system type?" 10 40 3 \
+        "BIOS" "BIOS" \
+        "UEFI_x86_64" "x86_64 UEFI" \
+        "UEFI_i386" "i386 UEFI" 2>${ANSWER} || CANCEL=1
+    case $(cat ${ANSWER}) in
+        "BIOS") install_bootloader_bios ;;
+        "UEFI_x86_64") install_bootloader_uefi_x86_64 ;;
+        "UEFI_i386") install_bootloader_uefi_i386 ;;
+    esac
+
+    if [[ "${CANCEL}" = "1" ]]; then
+        NEXTITEM="5"
+    else
+        NEXTITEM="6"
+    fi
+}
+
+# lists default linux blockdevices
+default_blockdevices(){
+    # ide devices
+    for dev in $(ls ${block} 2>/dev/null | egrep '^hd'); do
+        if [[ "$(cat ${block}/${dev}/device/media)" = "disk" ]]; then
+            if ! [[ "$(cat ${block}/${dev}/size)" = "0" ]]; then
+                if ! [[ "$(cat /proc/mdstat 2>/dev/null | grep "${dev}\[")" || "$(dmraid -rc | grep /dev/${dev})" ]]; then
+                    echo "/dev/${dev}"
+                    [[ "${1}" ]] && echo ${1}
+                fi
+            fi
+        fi
+    done
+    #scsi/sata devices, and virtio blockdevices (/dev/vd*)
+    for dev in $(ls ${block} 2>/dev/null | egrep '^[sv]d'); do
+        # virtio device doesn't have type file!
+        blktype="$(cat ${block}/${dev}/device/type 2>/dev/null)"
+        if ! [[ "${blktype}" = "5" ]]; then
+            if ! [[ "$(cat ${block}/${dev}/size)" = "0" ]]; then
+                if ! [[ "$(cat /proc/mdstat 2>/dev/null | grep "${dev}\[")" || "$(dmraid -rc | grep /dev/${dev})" ]]; then
+                    echo "/dev/${dev}"
+                    [[ "${1}" ]] && echo ${1}
+                fi
+            fi
+        fi
+    done
+}
+
+# set GUID (gpt) usage
+set_guid(){
+    ## Lenovo BIOS-GPT issues - Arch Forum - https://bbs.archlinux.org/viewtopic.php?id=131149 , https://bbs.archlinux.org/viewtopic.php?id=133330 , https://bbs.archlinux.org/viewtopic.php?id=138958
+    ## Lenovo BIOS-GPT issues - in Fedora - https://bugzilla.redhat.com/show_bug.cgi?id=735733, https://bugzilla.redhat.com/show_bug.cgi?id=749325 , http://git.fedorahosted.org/git/?p=anaconda.git;a=commit;h=ae74cebff312327ce2d9b5ac3be5dbe22e791f09
+    GUIDPARAMETER=""
+    DIALOG --defaultno --yesno "${_gptinfo}" 0 0 && GUIDPARAMETER="yes"
+}
+
+# Disable all software raid devices
+_stopmd(){
+    if [[ "$(cat /proc/mdstat 2>/dev/null | grep ^md)" ]]; then
+        DISABLEMD=""
+        DIALOG --defaultno --yesno "${_stop_md}" 0 0 && DISABLEMD="1"
+        if [[ "${DISABLEMD}" = "1" ]]; then
+            DIALOG --infobox "${_disable_raid}" 0 0
+            for i in $(cat /proc/mdstat 2>/dev/null | grep ^md | sed -e 's# :.*##g'); do
+                mdadm --manage --stop /dev/${i} > ${LOG}
+            done
+            DIALOG --infobox "${_clear_superblock}" 0 0
+            for i in $(${_BLKID} | grep "TYPE=\"linux_raid_member\"" | sed -e 's#:.*##g'); do
+                mdadm --zero-superblock ${i} > ${LOG}
+            done
+        fi
+    fi
+    DISABLEMDSB=""
+    if [[ "$(${_BLKID} | grep "TYPE=\"linux_raid_member\"")" ]]; then
+        DIALOG --defaultno --yesno "${_setup_superblock}" 0 0 && DISABLEMDSB="1"
+        if [[ "${DISABLEMDSB}" = "1" ]]; then
+            DIALOG --infobox "${_clean_superblock}" 0 0
+            for i in $(${_BLKID} | grep "TYPE=\"linux_raid_member\"" | sed -e 's#:.*##g'); do
+                mdadm --zero-superblock ${i} > ${LOG}
+            done
+        fi
+    fi
+}
+
+# Disable all lvm devices
+_stoplvm(){
+    DISABLELVM=""
+    DETECTED_LVM=""
+    LV_VOLUMES="$(lvs -o vg_name,lv_name --noheading --separator - 2>/dev/null)"
+    LV_GROUPS="$(vgs -o vg_name --noheading 2>/dev/null)"
+    LV_PHYSICAL="$(pvs -o pv_name --noheading 2>/dev/null)"
+    ! [[ "${LV_VOLUMES}" = "" ]] && DETECTED_LVM=1
+    ! [[ "${LV_GROUPS}" = "" ]] && DETECTED_LVM=1
+    ! [[ "${LV_PHYSICAL}" = "" ]] && DETECTED_LVM=1
+    if [[ "${DETECTED_LVM}" = "1" ]]; then
+        DIALOG --defaultno --yesno "${_stoplvm}" 0 0 && DISABLELVM="1"
+    fi
+    if [[ "${DISABLELVM}" = "1" ]]; then
+        DIALOG --infobox "${_remove_lvm}" 0 0
+        for i in ${LV_VOLUMES}; do
+            lvremove -f /dev/mapper/${i} 2>/dev/null> ${LOG}
+        done
+        DIALOG --infobox "${_remove_lvg}" 0 0
+        for i in ${LV_GROUPS}; do
+            vgremove -f ${i} 2>/dev/null > ${LOG}
+        done
+        DIALOG --infobox "${_remove_pvm}" 0 0
+        for i in ${LV_PHYSICAL}; do
+            pvremove -f ${i} 2>/dev/null > ${LOG}
+        done
+    fi
+}
+
+_stopluks(){
+    DISABLELUKS=""
+    DETECTED_LUKS=""
+    LUKSDEVICE=""
+
+    # detect already running luks devices
+    LUKS_DEVICES="$(ls /dev/mapper/ | grep -v control)"
+    for i in ${LUKS_DEVICES}; do
+        cryptsetup status ${i} 2>/dev/null && LUKSDEVICE="${LUKSDEVICE} ${i}"
+    done
+    ! [[ "${LUKSDEVICE}" = "" ]] && DETECTED_LUKS=1
+    if [[ "${DETECTED_LUKS}" = "1" ]]; then
+        DIALOG --defaultno --yesno "${_stopluks}" 0 0 && DISABLELUKS="1"
+    fi
+    if [[ "${DISABLELUKS}" = "1" ]]; then
+        DIALOG --infobox "${_removeluks}" 0 0
+        for i in ${LUKSDEVICE}; do
+            LUKS_REAL_DEVICE="$(echo $(cryptsetup status ${i} | grep device: | sed -e 's#device:##g'))"
+            cryptsetup remove ${i} > ${LOG}
+            # delete header from device
+            dd if=/dev/zero of=${LUKS_REAL_DEVICE} bs=512 count=2048 >/dev/null 2>&1
+        done
+    fi
+
+    DISABLELUKS=""
+    DETECTED_LUKS=""
+
+    # detect not running luks devices
+    [[ "$(${_BLKID} | grep "TYPE=\"crypto_LUKS\"")" ]] && DETECTED_LUKS=1
+    if [[ "${DETECTED_LUKS}" = "1" ]]; then
+        DIALOG --defaultno --yesno "${_stoprluks}" 0 0 && DISABLELUKS="1"
+    fi
+    if [[ "${DISABLELUKS}" = "1" ]]; then
+        DIALOG --infobox "${_removerluks}" 0 0
+        for i in $(${_BLKID} | grep "TYPE=\"crypto_LUKS\"" | sed -e 's#:.*##g'); do
+            # delete header from device
+            dd if=/dev/zero of=${i} bs=512 count=2048 >/dev/null 2>&1
+        done
+    fi
+    [[ -e /tmp/.crypttab ]] && rm /tmp/.crypttab
+}
+
+_umountall(){
+    DIALOG --infobox "$_umountingall" 0 0
+    swapoff -a >/dev/null 2>&1
+    umount $(mount | grep -v "${DESTDIR} " | grep "${DESTDIR}" | sed 's|\ .*||g') >/dev/null 2>&1
+    umount $(mount | grep "${DESTDIR} " | sed 's|\ .*||g') >/dev/null 2>&1
+}
+
+mountpoints(){
+    NAME_SCHEME_PARAMETER_RUN=""
+    while [[ "${PARTFINISH}" != "DONE" ]]; do
+        activate_special_devices
+        : >/tmp/.device-names
+        : >/tmp/.fstab
+        : >/tmp/.parts
+        #
+        # Select mountpoints
+        #
+        DIALOG --msgbox "Available partitions:\n\n$(_getavailpartitions)\n" 0 0
+        PARTS=$(findpartitions _)
+        DO_SWAP=""
+        while [[ "${DO_SWAP}" != "DONE" ]]; do
+            FSTYPE="swap"
+            DIALOG --menu "Select the partition to use as swap" 21 50 13 NONE - ${PARTS} 2>${ANSWER} || return 1
+            PART=$(cat ${ANSWER})
+            if [[ "${PART}" != "NONE" ]]; then
+                DOMKFS="no"
+                if [[ "${ASK_MOUNTPOINTS}" = "1" ]]; then
+                    create_filesystem
+                else
+                    FILESYSTEM_FINISH="yes"
+                fi
+            else
+                FILESYSTEM_FINISH="yes"
+            fi
+            [[ "${FILESYSTEM_FINISH}" = "yes" ]] && DO_SWAP=DONE
+        done
+        check_mkfs_values
+        if [[ "${PART}" != "NONE" ]]; then
+            PARTS="$(echo ${PARTS} | sed -e "s#${PART}\ _##g")"
+            echo "${PART}:swap:swap:${DOMKFS}:${LABEL_NAME}:${FS_OPTIONS}:${BTRFS_DEVICES}:${BTRFS_LEVEL}:${BTRFS_SUBVOLUME}:${DOSUBVOLUME}:${BTRFS_COMPRESS}:${BTRFS_SSD}" >>/tmp/.parts
+        fi
+        DO_ROOT=""
+        while [[ "${DO_ROOT}" != "DONE" ]]; do
+            DIALOG --menu "Select the partition to mount as /" 21 50 13 ${PARTS} 2>${ANSWER} || return 1
+            PART=$(cat ${ANSWER})
+            PART_ROOT=${PART}
+            # Select root filesystem type
+            FSTYPE="$(${_BLKID} -p -i -o value -s TYPE ${PART})"
+            DOMKFS="no"
+            # clear values first!
+            clear_btrfs_values
+            check_btrfs_filesystem_creation
+            if [[ "${ASK_MOUNTPOINTS}" = "1" && "${SKIP_FILESYSTEM}" = "no" ]]; then
+                select_filesystem && create_filesystem && btrfs_subvolume
+            else
+                btrfs_subvolume
+            fi
+            [[ "${FILESYSTEM_FINISH}" = "yes" ]] && DO_ROOT=DONE
+        done
+        find_btrfs_raid_devices
+        btrfs_parts
+        check_mkfs_values
+        echo "${PART}:${FSTYPE}:/:${DOMKFS}:${LABEL_NAME}:${FS_OPTIONS}:${BTRFS_DEVICES}:${BTRFS_LEVEL}:${BTRFS_SUBVOLUME}:${DOSUBVOLUME}:${BTRFS_COMPRESS}:${BTRFS_SSD}" >>/tmp/.parts
+        ! [[ "${FSTYPE}" = "btrfs" ]] && PARTS="$(echo ${PARTS} | sed -e "s#${PART}\ _##g")"
+        #
+        # Additional partitions
+        #
+        while [[ "${PART}" != "DONE" ]]; do
+            DO_ADDITIONAL=""
+            while [[ "${DO_ADDITIONAL}" != "DONE" ]]; do
+                DIALOG --menu "Select any additional partitions to mount under your new root (select DONE when finished)" 21 52 13 ${PARTS} DONE _ 2>${ANSWER} || return 1
+                PART=$(cat ${ANSWER})
+                if [[ "${PART}" != "DONE" ]]; then
+                    FSTYPE="$(${_BLKID} -p -i  -o value -s TYPE ${PART})"
+                    DOMKFS="no"
+                    # clear values first!
+                    clear_btrfs_values
+                    check_btrfs_filesystem_creation
+                    # Select a filesystem type
+                    if [[ "${ASK_MOUNTPOINTS}" = "1" && "${SKIP_FILESYSTEM}" = "no" ]]; then
+                        enter_mountpoint && select_filesystem && create_filesystem && btrfs_subvolume
+                    else
+                        enter_mountpoint
+                        btrfs_subvolume
+                    fi
+                    check_btrfs_boot_subvolume
+                else
+                    FILESYSTEM_FINISH="yes"
+                fi
+                [[ "${FILESYSTEM_FINISH}" = "yes" ]] && DO_ADDITIONAL="DONE"
+            done
+            if [[ "${PART}" != "DONE" ]]; then
+                find_btrfs_raid_devices
+                btrfs_parts
+                check_mkfs_values
+                echo "${PART}:${FSTYPE}:${MP}:${DOMKFS}:${LABEL_NAME}:${FS_OPTIONS}:${BTRFS_DEVICES}:${BTRFS_LEVEL}:${BTRFS_SUBVOLUME}:${DOSUBVOLUME}:${BTRFS_COMPRESS}:${BTRFS_SSD}" >>/tmp/.parts
+                ! [[ "${FSTYPE}" = "btrfs" ]] && PARTS="$(echo ${PARTS} | sed -e "s#${PART}\ _##g")"
+            fi
+        done
+        DIALOG --yesno "Would you like to create and mount the filesytems like this?\n\nSyntax\n------\nDEVICE:TYPE:MOUNTPOINT:FORMAT:LABEL:FSOPTIONS:BTRFS_DETAILS\n\n$(for i in $(cat /tmp/.parts | sed -e 's, ,#,g'); do echo "${i}\n";done)" 0 0 && PARTFINISH="DONE"
+    done
+    # disable swap and all mounted partitions
+    _umountall
+    if [[ "${NAME_SCHEME_PARAMETER_RUN}" = "" ]]; then
+        set_device_name_scheme || return 1
+    fi
+    printk off
+    for line in $(cat /tmp/.parts); do
+        PART=$(echo ${line} | cut -d: -f 1)
+        FSTYPE=$(echo ${line} | cut -d: -f 2)
+        MP=$(echo ${line} | cut -d: -f 3)
+        DOMKFS=$(echo ${line} | cut -d: -f 4)
+        LABEL_NAME=$(echo ${line} | cut -d: -f 5)
+        FS_OPTIONS=$(echo ${line} | cut -d: -f 6)
+        BTRFS_DEVICES=$(echo ${line} | cut -d: -f 7)
+        BTRFS_LEVEL=$(echo ${line} | cut -d: -f 8)
+        BTRFS_SUBVOLUME=$(echo ${line} | cut -d: -f 9)
+        DOSUBVOLUME=$(echo ${line} | cut -d: -f 10)
+        BTRFS_COMPRESS=$(echo ${line} | cut -d: -f 11)
+        BTRFS_SSD=$(echo ${line} | cut -d: -f 12)
+        if [[ "${DOMKFS}" = "yes" ]]; then
+            if [[ "${FSTYPE}" = "swap" ]]; then
+                DIALOG --infobox "Creating and activating swapspace on ${PART}" 0 0
+            else
+                DIALOG --infobox "Creating ${FSTYPE} on ${PART},\nmounting to ${DESTDIR}${MP}" 0 0
+            fi
+            _mkfs yes ${PART} ${FSTYPE} ${DESTDIR} ${MP} ${LABEL_NAME} ${FS_OPTIONS} ${BTRFS_DEVICES} ${BTRFS_LEVEL} ${BTRFS_SUBVOLUME} ${DOSUBVOLUME} ${BTRFS_COMPRESS} ${BTRFS_SSD} || return 1
+        else
+            if [[ "${FSTYPE}" = "swap" ]]; then
+                DIALOG --infobox "Activating swapspace on ${PART}" 0 0
+            else
+                DIALOG --infobox "Mounting ${FSTYPE} on ${PART} to ${DESTDIR}${MP}" 0 0
+            fi
+            _mkfs no ${PART} ${FSTYPE} ${DESTDIR} ${MP} ${LABEL_NAME} ${FS_OPTIONS} ${BTRFS_DEVICES} ${BTRFS_LEVEL} ${BTRFS_SUBVOLUME} ${DOSUBVOLUME} ${BTRFS_COMPRESS} ${BTRFS_SSD} || return 1
+        fi
+        sleep 1
+    done
+    printk on
+    DIALOG --msgbox "Partitions were successfully mounted." 0 0
+    NEXTITEM="5"
+    S_MKFS=1
+}
+
+# menu for raid, lvm and encrypt
+create_special(){
+    NEXTITEM=""
+    SPECIALDONE=0
+    while [[ "${SPECIALDONE}" = "0" ]]; do
+        if [[ -n "${NEXTITEM}" ]]; then
+            DEFAULT="--default-item ${NEXTITEM}"
+        else
+            DEFAULT=""
+        fi
+        CANCEL=""
+        dialog ${DEFAULT} --backtitle "${TITLE}" --menu "Create Software Raid, LVM2 and Luks encryption" 14 60 5 \
+            "1" "Create Software Raid" \
+            "2" "Create LVM2" \
+            "3" "Create Luks encryption" \
+            "4" "Return to Previous Menu" 2>${ANSWER} || CANCEL="1"
+        NEXTITEM="$(cat ${ANSWER})"
+        case $(cat ${ANSWER}) in
+            "1")
+                _createmd ;;
+            "2")
+                _createlvm ;;
+            "3")
+                _createluks ;;
+            *)
+                SPECIALDONE=1 ;;
+        esac
+    done
+    if [[ "${CANCEL}" = "1" ]]; then
+        NEXTITEM="3"
+    else
+        NEXTITEM="4"
+    fi
+}
+
+partition(){
+    # disable swap and all mounted partitions, umount / last!
+    _umountall
+    # check on encrypted devices, else weird things can happen!
+    _stopluks
+    # check on raid devices, else weird things can happen during partitioning!
+    _stopmd
+    # check on lvm devices, else weird things can happen during partitioning!
+    _stoplvm
+    # update dmraid
+    _dmraid_update
+    # switch for mbr usage
+    set_guid
+    # Select disk to partition
+    DISCS=$(finddisks _)
+    DISCS="${DISCS} OTHER _ DONE +"
+    DIALOG --msgbox "Available Disks:\n\n$(_getavaildisks)\n" 0 0
+    DISC=""
+    while true; do
+        # Prompt the user with a list of known disks
+        DIALOG --menu "Select the disk you want to partition\n(select DONE when finished)" 14 55 7 ${DISCS} 2>${ANSWER} || return 1
+        DISC=$(cat ${ANSWER})
+        if [[ "${DISC}" == "OTHER" ]]; then
+            DIALOG --inputbox "Enter the full path to the device you wish to partition" 8 65 "/dev/sda" 2>${ANSWER} || DISC=""
+            DISC=$(cat ${ANSWER})
+        fi
+        # Leave our loop if the user is done partitioning
+        [[ "${DISC}" == "DONE" ]] && break
+        MSDOS_DETECTED=""
+        if ! [[ "${DISC}" == "" ]]; then
+            if [[ "${GUIDPARAMETER}" == "yes" ]]; then
+                CHECK_BIOS_BOOT_GRUB=""
+                CHECK_UEFISYS_PART=""
+                RUN_CGDISK="1"
+                check_gpt
+            else
+                [[ "$(${_BLKID} -p -i -o value -s PTTYPE ${DISC})" == "dos" ]] && MSDOS_DETECTED="1"
+
+                if [[ "${MSDOS_DETECTED}" == "" ]]; then
+                    DIALOG --defaultno --yesno "Setup detected no MS-DOS partition table on ${DISC}.\nDo you want to create a MS-DOS partition table now on ${DISC}?\n\n${DISC} will be COMPLETELY ERASED!  Are you absolutely sure?" 0 0 || return 1
+                    # clean partitiontable to avoid issues!
+                    dd if=/dev/zero of=${DEVICE} bs=512 count=2048 >/dev/null 2>&1
+                    wipefs -a ${DEVICE} /dev/null 2>&1
+                    parted -a optimal -s ${DISC} mktable msdos >${LOG}
+                fi
+                # Partition disc
+                DIALOG --msgbox "Now you'll be put into the parted shell where you can partition your hard drive. You should make a swap partition and as many data partitions as you will need.\n\nShort command list:\n- 'help' to get help text\n- 'print' to show  partition table\n- 'mkpart' for new partition\n- 'rm' for deleting a partition\n- 'quit' to leave parted\n\nNOTE: parted may tell you to reboot after creating partitions.  If you need to reboot, just re-enter this install program, skip this step and go on." 18 70
+                clear
+                ## Use parted for correct alignment, cfdisk does not align correct!
+                parted ${DISC} print
+                parted ${DISC}
+            fi
+        fi
+    done
+    # update dmraid
+    _dmraid_update
+    NEXTITEM="4"
+    S_PART=1
+}
+
+# set device name scheme
+set_device_name_scheme(){
+    NAME_SCHEME_PARAMETER=""
+    NAME_SCHEME_LEVELS=""
+    MENU_DESC_TEXT=""
+
+    # check if gpt/guid formatted disks are there
+    find_gpt
+
+    ## util-linux root=PARTUUID=/root=PARTLABEL= support - https://git.kernel.org/?p=utils/util-linux/util-linux.git;a=commitdiff;h=fc387ee14c6b8672761ae5e67ff639b5cae8f27c;hp=21d1fa53f16560dacba33fffb14ffc05d275c926
+    ## mkinitcpio's init root=PARTUUID= support - https://projects.archlinux.org/mkinitcpio.git/tree/init_functions#n185
+
+    if [[ "${GUID_DETECTED}" == "1" ]]; then
+        NAME_SCHEME_LEVELS="${NAME_SCHEME_LEVELS} PARTUUID PARTUUID=<partuuid> PARTLABEL PARTLABEL=<partlabel>"
+        MENU_DESC_TEXT="${_menu_descg}"
+    fi
+
+    NAME_SCHEME_LEVELS="${NAME_SCHEME_LEVELS} FSUUID UUID=<uuid> FSLABEL LABEL=<label> KERNEL /dev/<kernelname>"
+    DIALOG --menu "${_device_name_scheme_1}${MENU_DESC_TEXT}${_device_name_scheme_2}" 15 70 9 ${NAME_SCHEME_LEVELS} 2>${ANSWER} || return 1
+    NAME_SCHEME_PARAMETER=$(cat ${ANSWER})
+    NAME_SCHEME_PARAMETER_RUN="1"
+}
+
+autoprepare(){
+    # check on encrypted devices, else weird things can happen!
+    _stopluks
+    # check on raid devices, else weird things can happen during partitioning!
+    _stopmd
+    # check on lvm devices, else weird things can happen during partitioning!
+    _stoplvm
+    NAME_SCHEME_PARAMETER_RUN=""
+    # switch for mbr usage
+    set_guid
+    DISCS=$(default_blockdevices)
+    if [[ "$(echo ${DISCS} | wc -w)" -gt 1 ]]; then
+        DIALOG --msgbox "Available Disks:\n\n$(_getavaildisks)\n" 0 0
+        DIALOG --menu "Select the hard drive to use" 14 55 7 $(default_blockdevices _) 2>${ANSWER} || return 1
+        DISC=$(cat ${ANSWER})
+    else
+        DISC=${DISCS}
+    fi
+    DEFAULTFS=""
+    BOOT_PART_SET=""
+    SWAP_PART_SET=""
+    ROOT_PART_SET=""
+    CHOSEN_FS=""
+    # get just the disk size in 1000*1000 MB
+    if [[ "$(cat ${block}/$(basename ${DISC} 2>/dev/null)/size 2>/dev/null)" ]]; then
+        DISC_SIZE="$(($(expr $(cat ${block}/$(basename ${DISC})/queue/logical_block_size) '*' $(cat ${block}/$(basename ${DISC})/size))/1000000))"
+    else
+        DIALOG --msgbox "ERROR: Setup cannot detect size of your device, please use normal installation routine for partitioning and mounting devices." 0 0
+        return 1
+    fi
+    while [[ "${DEFAULTFS}" = "" ]]; do
+        FSOPTS=""
+        [[ "$(which mkfs.ext2 2>/dev/null)" ]] && FSOPTS="${FSOPTS} ext2 Ext2"
+        [[ "$(which mkfs.ext3 2>/dev/null)" ]] && FSOPTS="${FSOPTS} ext3 Ext3"
+        [[ "$(which mkfs.ext4 2>/dev/null)" ]] && FSOPTS="${FSOPTS} ext4 Ext4"
+        [[ "$(which mkfs.btrfs 2>/dev/null)" ]] && FSOPTS="${FSOPTS} btrfs Btrfs-(Experimental)"
+        [[ "$(which mkfs.nilfs2 2>/dev/null)" ]] && FSOPTS="${FSOPTS} nilfs2 Nilfs2-(Experimental)"
+        [[ "$(which mkreiserfs 2>/dev/null)" ]] && FSOPTS="${FSOPTS} reiserfs Reiser3"
+        [[ "$(which mkfs.xfs 2>/dev/null)" ]] && FSOPTS="${FSOPTS} xfs XFS"
+        [[ "$(which mkfs.jfs 2>/dev/null)" ]] && FSOPTS="${FSOPTS} jfs JFS"
+        # create 1 MB bios_grub partition for grub-bios GPT support
+        if [[ "${GUIDPARAMETER}" = "yes" ]]; then
+            GUID_PART_SIZE="2"
+            GPT_BIOS_GRUB_PART_SIZE="${GUID_PART_SIZE}"
+            UEFISYS_PART_SIZE="512"
+        else
+            GUID_PART_SIZE="0"
+            UEFISYS_PART_SIZE="0"
+        fi
+        DISC_SIZE=$((${DISC_SIZE}-${GUID_PART_SIZE}-${UEFISYS_PART_SIZE}))
+        while [[ "${BOOT_PART_SET}" = "" ]]; do
+            DIALOG --inputbox "Enter the size (MB) of your /boot partition,\nMinimum value is 150.\n\nDisk space left: ${DISC_SIZE} MB" 10 65 "512" 2>${ANSWER} || return 1
+            BOOT_PART_SIZE="$(cat ${ANSWER})"
+            if [[ "${BOOT_PART_SIZE}" = "" ]]; then
+                DIALOG --msgbox "ERROR: You have entered a invalid size, please enter again." 0 0
+            else
+                if [[ "${BOOT_PART_SIZE}" -ge "${DISC_SIZE}" || "${BOOT_PART_SIZE}" -lt "150" || "${SBOOT_PART_SIZE}" = "${DISC_SIZE}" ]]; then
+                    DIALOG --msgbox "ERROR: You have entered an invalid size, please enter again." 0 0
+                else
+                    BOOT_PART_SET=1
+                fi
+            fi
+        done
+        DISC_SIZE=$((${DISC_SIZE}-${BOOT_PART_SIZE}))
+        SWAP_SIZE="256"
+        [[ "${DISC_SIZE}" -lt "256" ]] && SWAP_SIZE="${DISC_SIZE}"
+        while [[ "${SWAP_PART_SET}" = "" ]]; do
+            DIALOG --inputbox "Enter the size (MB) of your swap partition,\nMinimum value is > 0.\n\nDisk space left: ${DISC_SIZE} MB" 10 65 "${SWAP_SIZE}" 2>${ANSWER} || return 1
+            SWAP_PART_SIZE=$(cat ${ANSWER})
+            if [[ "${SWAP_PART_SIZE}" = "" || "${SWAP_PART_SIZE}" = "0" ]]; then
+                DIALOG --msgbox "ERROR: You have entered an invalid size, please enter again." 0 0
+            else
+                if [[ "${SWAP_PART_SIZE}" -ge "${DISC_SIZE}" ]]; then
+                    DIALOG --msgbox "ERROR: You have entered a too large size, please enter again." 0 0
+                else
+                    SWAP_PART_SET=1
+                fi
+            fi
+        done
+        DISC_SIZE=$((${DISC_SIZE}-${SWAP_PART_SIZE}))
+        ROOT_SIZE="6400"
+        [[ "${DISC_SIZE}" -lt "6400" ]] && ROOT_SIZE="${DISC_SIZE}"
+        while [[ "${ROOT_PART_SET}" = "" ]]; do
+        DIALOG --inputbox "Enter the size (MB) of your / partition,\nthe /home partition will use the remaining space.\n\nDisk space left:  ${DISC_SIZE} MB" 10 65 "${ROOT_SIZE}" 2>${ANSWER} || return 1
+        ROOT_PART_SIZE=$(cat ${ANSWER})
+            if [[ "${ROOT_PART_SIZE}" = "" || "${ROOT_PART_SIZE}" = "0" ]]; then
+                DIALOG --msgbox "ERROR: You have entered an invalid size, please enter again." 0 0
+            else
+                if [[ "${ROOT_PART_SIZE}" -ge "${DISC_SIZE}" ]]; then
+                    DIALOG --msgbox "ERROR: You have entered a too large size, please enter again." 0 0
+                else
+                    DIALOG --yesno "$((${DISC_SIZE}-${ROOT_PART_SIZE})) MB will be used for your /home partition. Is this OK?" 0 0 && ROOT_PART_SET=1
+                fi
+            fi
+        done
+        while [[ "${CHOSEN_FS}" = "" ]]; do
+            DIALOG --menu "Select a filesystem for / and /home:" 16 45 8 ${FSOPTS} 2>${ANSWER} || return 1
+            FSTYPE=$(cat ${ANSWER})
+            DIALOG --yesno "${FSTYPE} will be used for / and /home. Is this OK?" 0 0 && CHOSEN_FS=1
+        done
+        DEFAULTFS=1
+    done
+    DIALOG --defaultno --yesno "${DISC} will be COMPLETELY ERASED!  Are you absolutely sure?" 0 0 \
+    || return 1
+    DEVICE=${DISC}
+
+    # validate DEVICE
+    if [[ ! -b "${DEVICE}" ]]; then
+      DIALOG --msgbox "Device '${DEVICE}' is not valid" 0 0
+      return 1
+    fi
+
+    # validate DEST
+    if [[ ! -d "${DESTDIR}" ]]; then
+        DIALOG --msgbox "Destination directory '${DESTDIR}' is not valid" 0 0
+        return 1
+    fi
+
+    [[ -e /tmp/.fstab ]] && rm -f /tmp/.fstab
+    # disable swap and all mounted partitions, umount / last!
+    _umountall
+    # we assume a /dev/hdX format (or /dev/sdX)
+    if [[ "${GUIDPARAMETER}" == "yes" ]]; then
+        PART_ROOT="${DEVICE}5"
+        # GPT (GUID) is supported only by 'parted' or 'sgdisk'
+        printk off
+        DIALOG --infobox "Partitioning ${DEVICE}" 0 0
+        # clean partition table to avoid issues!
+        sgdisk --zap ${DEVICE} &>/dev/null
+        # clear all magic strings/signatures - mdadm, lvm, partition tables etc.
+        dd if=/dev/zero of=${DEVICE} bs=512 count=2048 &>/dev/null
+        wipefs -a ${DEVICE} &>/dev/null
+        # create fresh GPT
+        sgdisk --clear ${DEVICE} &>/dev/null
+        # create actual partitions
+        sgdisk --set-alignment="2048" --new=1:1M:+${GPT_BIOS_GRUB_PART_SIZE}M --typecode=1:EF02 --change-name=1:BIOS_GRUB ${DEVICE} > ${LOG}
+        sgdisk --set-alignment="2048" --new=2:+1M:+${UEFISYS_PART_SIZE}M --typecode=2:EF00 --change-name=2:UEFI_SYSTEM ${DEVICE} > ${LOG}
+        sgdisk --set-alignment="2048" --new=3:+1M:+${BOOT_PART_SIZE}M --typecode=3:8300 --attributes=3:set:2 --change-name=3:MANJARO_BOOT ${DEVICE} > ${LOG}
+        sgdisk --set-alignment="2048" --new=4:+1M:+${SWAP_PART_SIZE}M --typecode=4:8200 --change-name=4:MANJARO_SWAP ${DEVICE} > ${LOG}
+        sgdisk --set-alignment="2048" --new=5:+1M:+${ROOT_PART_SIZE}M --typecode=5:8300 --change-name=5:MANJARO_ROOT ${DEVICE} > ${LOG}
+        sgdisk --set-alignment="2048" --new=6:+1M:0 --typecode=6:8300 --change-name=6:MANJARO_HOME ${DEVICE} > ${LOG}
+        sgdisk --print ${DEVICE} > ${LOG}
+    else
+        PART_ROOT="${DEVICE}3"
+        # start at sector 1 for 4k drive compatibility and correct alignment
+        printk off
+        DIALOG --infobox "Partitioning ${DEVICE}" 0 0
+        # clean partitiontable to avoid issues!
+        dd if=/dev/zero of=${DEVICE} bs=512 count=2048 >/dev/null 2>&1
+        wipefs -a ${DEVICE} &>/dev/null
+        # create DOS MBR with parted
+        parted -a optimal -s ${DEVICE} unit MiB mktable msdos >/dev/null 2>&1
+        parted -a optimal -s ${DEVICE} unit MiB mkpart primary 1 $((${GUID_PART_SIZE}+${BOOT_PART_SIZE})) >${LOG}
+        parted -a optimal -s ${DEVICE} unit MiB set 1 boot on >${LOG}
+        parted -a optimal -s ${DEVICE} unit MiB mkpart primary $((${GUID_PART_SIZE}+${BOOT_PART_SIZE}+1)) $((${GUID_PART_SIZE}+${BOOT_PART_SIZE}+${SWAP_PART_SIZE}+1)) >${LOG}
+        parted -a optimal -s ${DEVICE} unit MiB mkpart primary $((${GUID_PART_SIZE}+${BOOT_PART_SIZE}+${SWAP_PART_SIZE}+2)) $((${GUID_PART_SIZE}+${BOOT_PART_SIZE}+${SWAP_PART_SIZE}+${ROOT_PART_SIZE}+2)) >${LOG}
+        parted -a optimal -s ${DEVICE} unit MiB mkpart primary $((${GUID_PART_SIZE}+${BOOT_PART_SIZE}+${SWAP_PART_SIZE}+${ROOT_PART_SIZE}+3)) 100% >${LOG}
+    fi
+    if [[ $? -gt 0 ]]; then
+        DIALOG --msgbox "Error partitioning ${DEVICE} (see ${LOG} for details)" 0 0
+        printk on
+        return 1
+    fi
+    printk on
+    ## wait until /dev initialized correct devices
+    udevadm settle
+
+    if [[ "${NAME_SCHEME_PARAMETER_RUN}" == "" ]]; then
+        set_device_name_scheme || return 1
+    fi
+    ## FSSPECS - default filesystem specs (the + is bootable flag)
+    ## <partnum>:<mountpoint>:<partsize>:<fstype>[:<fsoptions>][:+]:labelname
+    ## The partitions in FSSPECS list should be listed in the "mountpoint" order.
+    ## Make sure the "root" partition is defined first in the FSSPECS list
+    FSSPECS="3:/:${ROOT_PART_SIZE}:${FSTYPE}:::ROOT_MANJARO 1:/boot:${BOOT_PART_SIZE}:ext2::+:BOOT_MANJARO 4:/home:*:${FSTYPE}:::HOME_MANJARO 2:swap:${SWAP_PART_SIZE}:swap:::SWAP_MANJARO"
+
+    if [[ "${GUIDPARAMETER}" == "yes" ]]; then
+        FSSPECS="5:/:${ROOT_PART_SIZE}:${FSTYPE}:::ROOT_MANJARO 3:/boot:${BOOT_PART_SIZE}:ext2::+:BOOT_MANJARO 2:/boot/efi:512:vfat:-F32::ESP 6:/home:*:${FSTYPE}:::HOME_MANJARO 4:swap:${SWAP_PART_SIZE}:swap:::SWAP_MANJARO"
+    fi
+
+    ## make and mount filesystems
+    for fsspec in ${FSSPECS}; do
+        part="$(echo ${fsspec} | tr -d ' ' | cut -f1 -d:)"
+        mountpoint="$(echo ${fsspec} | tr -d ' ' | cut -f2 -d:)"
+        fstype="$(echo ${fsspec} | tr -d ' ' | cut -f4 -d:)"
+        fsoptions="$(echo ${fsspec} | tr -d ' ' | cut -f5 -d:)"
+        [[ "${fsoptions}" == "" ]] && fsoptions="NONE"
+        labelname="$(echo ${fsspec} | tr -d ' ' | cut -f7 -d:)"
+        btrfsdevices="${DEVICE}${part}"
+        btrfsssd="NONE"
+        btrfscompress="NONE"
+        btrfssubvolume="NONE"
+        btrfslevel="NONE"
+        dosubvolume="no"
+        # if echo "${mountpoint}" | tr -d ' ' | grep '^/$' 2>&1 >/dev/null; then
+        # if [[ "$(echo ${mountpoint} | tr -d ' ' | grep '^/$' | wc -l)" -eq 0 ]]; then
+        DIALOG --infobox "Creating ${fstype} on ${DEVICE}${part}\nwith FSLABEL ${labelname} .\nMountpoint is ${mountpoint} ." 0 0
+        _mkfs yes "${DEVICE}${part}" "${fstype}" "${DESTDIR}" "${mountpoint}" "${labelname}" "${fsoptions}" "${btrfsdevices}" "${btrfssubvolume}" "${btrfslevel}" "${dosubvolume}" "${btrfssd}" "${btrfscompress}" || return 1
+        # fi
+    done
+
+    DIALOG --msgbox "Auto-prepare was successful" 0 0
+    S_MKFSAUTO=1
+}
+
+set_passwd(){
+	# trap tmp-file for passwd
+	trap "rm -f ${ANSWER}" 0 1 2 5 15
+	# get password
+	DIALOG --title "$_passwdtitle" \
+		--clear \
+		--insecure \
+		--passwordbox "$_passwddl $PASSWDUSER" 10 30 2> ${ANSWER}
+	PASSWD="$(cat ${ANSWER})"
+	DIALOG --title "$_passwdtitle" \
+		--clear \
+		--insecure \
+		--passwordbox "$_passwddl2 $PASSWDUSER" 10 30 2> ${ANSWER}
+	PASSWD2="$(cat ${ANSWER})"
+	if [ "$PASSWD" == "$PASSWD2" ]; then
+		PASSWD=$PASSWD
+		_passwddl=$_passwddl1
+    else
+		_passwddl=$_passwddl3
+		set_passwd
+    fi
+}
+
+setup_user(){
+   # addgroups="video,audio,power,disk,storage,optical,network,lp,scanner"
+    DIALOG --inputbox "${_enterusername}" 10 65 "${username2}" 2>${ANSWER} || return 1
+    REPLY="$(cat ${ANSWER})"
+    while [ -z "$(echo $REPLY |grep -E '^[a-z_][a-z0-9_-]*[$]?$')" ];do
+       DIALOG --inputbox "${_givecorrectname}" 10 65 "${username2}" 2>${ANSWER} || return 1
+       REPLY="$(cat ${ANSWER})"
+    done
+
+    chroot ${DESTDIR} useradd -m -p "" -g users -G ${addgroups} $REPLY
+
+    PASSWDUSER="$REPLY"
+
+    if [ -d "${DESTDIR}/var/lib/AccountsService/users" ] ; then
+       echo "[User]" > ${DESTDIR}/var/lib/AccountsService/users/$PASSWDUSER
+       if [ -e "/usr/bin/startxfce4" ] ; then
+          echo "XSession=xfce" >> ${DESTDIR}/var/lib/AccountsService/users/$PASSWDUSER
+       fi
+       if [ -e "/usr/bin/cinnamon-session" ] ; then
+          echo "XSession=cinnamon" >> ${DESTDIR}/var/lib/AccountsService/users/$PASSWDUSER
+       fi
+       if [ -e "/usr/bin/mate-session" ] ; then
+          echo "XSession=mate" >> ${DESTDIR}/var/lib/AccountsService/users/$PASSWDUSER
+       fi
+       if [ -e "/usr/bin/enlightenment_start" ] ; then
+          echo "XSession=enlightenment" >> ${DESTDIR}/var/lib/AccountsService/users/$PASSWDUSER
+       fi
+       if [ -e "/usr/bin/openbox-session" ] ; then
+          echo "XSession=openbox" >> ${DESTDIR}/var/lib/AccountsService/users/$PASSWDUSER
+       fi
+       if [ -e "/usr/bin/startlxde" ] ; then
+          echo "XSession=LXDE" >> ${DESTDIR}/var/lib/AccountsService/users/$PASSWDUSER
+       fi
+       if [ -e "/usr/bin/lxqt-session" ] ; then
+          echo "XSession=LXQt" >> ${DESTDIR}/var/lib/AccountsService/users/$PASSWDUSER
+       fi
+       echo "Icon=" >> ${DESTDIR}/var/lib/AccountsService/users/$PASSWDUSER
+    fi
+
+    if DIALOG --yesno "${_addsudouserdl1}${REPLY}${_addsudouserdl2}" 6 40;then
+       echo "${PASSWDUSER}     ALL=(ALL) ALL" >> ${DESTDIR}/etc/sudoers
+    fi
+    sed -i -e 's|# %wheel ALL=(ALL) ALL|%wheel ALL=(ALL) ALL|g' ${DESTDIR}/etc/sudoers
+    chmod 0440 ${DESTDIR}/etc/sudoers
+    set_passwd
+    echo "$PASSWDUSER:$PASSWD" | chroot ${DESTDIR} chpasswd
+    NEXTITEM="Setup-User"
+    DONE_CONFIG=1
+}
+
+set_language(){
+    if [[ -e /opt/livecd/lg ]]; then
+        /opt/livecd/lg --setup
+    else
+        DIALOG --msgbox "Error:\nlg script not found, aborting language setting" 0 0
+    fi
+}
+
+set_keyboard(){
+    if [[ -e /opt/livecd/km ]]; then
+        /opt/livecd/km --setup
+    else
+        DIALOG --msgbox "Error:\nkm script not found, aborting keyboard and console setting" 0 0
+    fi
+}
+
+config_system(){
+    DONE=0
+    NEXTITEM=""
+    while [[ "${DONE}" = "0" ]]; do
+        if [[ -n "${NEXTITEM}" ]]; then
+            DEFAULT="--default-item ${NEXTITEM}"
+        else
+            DEFAULT=""
+        fi
+        if [[ -e /run/systemd ]]; then
+			DIALOG $DEFAULT --menu "Configuration" 17 78 10 \
+				"/etc/fstab"                "${_fstabtext}" \
+				"/etc/mkinitcpio.conf"      "${_mkinitcpioconftext}" \
+				"/etc/resolv.conf"          "${_resolvconftext}" \
+				"/etc/hostname"             "${_hostnametext}" \
+				"/etc/hosts"                "${_hoststext}" \
+				"/etc/hosts.deny"           "${_hostsdenytext}" \
+				"/etc/hosts.allow"          "${_hostsallowtext}" \
+				"/etc/locale.gen"           "${_localegentext}" \
+				"/etc/locale.conf"           "${_localeconftext}" \
+				"/etc/environment"           "${_environmenttext}" \
+				"/etc/pacman.d/mirrorlist"  "${_mirrorlisttext}" \
+				"/etc/X11/xorg.conf.d/10-evdev.conf"  "${_xorgevdevconftext}" \
+				"/etc/keyboard.conf"        "${_vconsoletext}" \
+				"${_return_label}"        "${_return_label}" 2>${ANSWER} || NEXTITEM="${_return_label}"
+			NEXTITEM="$(cat ${ANSWER})"
+        else
+			DIALOG $DEFAULT --menu "Configuration" 17 78 10 \
+				"/etc/fstab"                "${_fstabtext}" \
+				"/etc/mkinitcpio.conf"      "${_mkinitcpioconftext}" \
+				"/etc/resolv.conf"          "${_resolvconftext}" \
+				"/etc/rc.conf"              "${_rcconfigtext}" \
+				"/etc/conf.d/hostname"      "${_hostnametext}" \
+				"/etc/conf.d/keymaps"       "${_localeconftext}" \
+				"/etc/conf.d/modules"       "${_modulesconftext}" \
+				"/etc/conf.d/hwclock"       "${_hwclockconftext}" \
+				"/etc/conf.d/xdm"           "${_xdmconftext}" \
+				"/etc/hosts"                "${_hoststext}" \
+				"/etc/hosts.deny"           "${_hostsdenytext}" \
+				"/etc/hosts.allow"          "${_hostsallowtext}" \
+				"/etc/locale.gen"           "${_localegentext}" \
+				"/etc/environment"          "${_environmenttext}" \
+				"/etc/pacman.d/mirrorlist"  "${_mirrorlisttext}" \
+				"/etc/X11/xorg.conf.d/10-evdev.conf"  "${_xorgevdevconftext}" \
+				"${_return_label}"        "${_return_label}" 2>${ANSWER} || NEXTITEM="${_return_label}"
+			NEXTITEM="$(cat ${ANSWER})"
+        fi
+
+        if [ "${NEXTITEM}" = "${_return_label}" -o -z "${NEXTITEM}" ]; then       # exit
+           DONE=1
+        else
+           $EDITOR ${DESTDIR}${NEXTITEM}
+        fi
+    done
+}
+
 install_bootloader(){
 
     destdir_mounts || return 1
@@ -4880,23 +4705,79 @@ install_bootloader(){
     fi
 }
 
-install_bootloader_menu(){
-
-    DIALOG --menu "What is your boot system type?" 10 40 3 \
-        "BIOS" "BIOS" \
-        "UEFI_x86_64" "x86_64 UEFI" \
-        "UEFI_i386" "i386 UEFI" 2>${ANSWER} || CANCEL=1
-    case $(cat ${ANSWER}) in
-        "BIOS") install_bootloader_bios ;;
-        "UEFI_x86_64") install_bootloader_uefi_x86_64 ;;
-        "UEFI_i386") install_bootloader_uefi_i386 ;;
-    esac
-
-    if [[ "${CANCEL}" = "1" ]]; then
-        NEXTITEM="5"
-    else
-        NEXTITEM="6"
+# installsystem_cp()
+# installs to the target folder
+installsystem_cp(){
+    #DIALOG --msgbox "${_installationwillstart}" 0 0
+    #clear
+    mkdir -p ${DESTDIR}
+    #rsync -av --progress /source/root-image ${DESTDIR}
+    CP_SOURCE=/source/root-image
+    mkdir -p ${CP_SOURCE}
+    CP_TARGET=${DESTDIR}
+    SQF_FILE=root-image.sqfs
+    run_mount_sqf
+    run_cp
+    run_umount_sqf
+    echo $? > /tmp/.install-retcode
+    if [ $(cat /tmp/.install-retcode) -ne 0 ]; then echo -e "\n${_installationfail}" >>/tmp/rsyncerror.log
+    else echo -e "\n => Root-Image: ${_installationsuccess}" >>/tmp/rsyncerror.log
     fi
+
+    #rsync -av --progress /source/de-image ${DESTDIR}
+    CP_SOURCE=/source/${DESKTOP_IMG}
+    mkdir -p ${CP_SOURCE}
+    CP_TARGET=${DESTDIR}
+    SQF_FILE=${DESKTOP_IMG}.sqfs
+    run_mount_sqf
+    run_cp
+    run_umount_sqf
+    echo $? > /tmp/.install-retcode
+    if [ $(cat /tmp/.install-retcode) -ne 0 ]; then echo -e "\n${_installationfail}" >>/tmp/rsyncerror.log
+    else echo -e "\n => ${DESKTOP}-Image: ${_installationsuccess}" >>/tmp/rsyncerror.log
+    fi
+
+    # finished, display scrollable output
+    local _result=''
+    if [ $(cat /tmp/.install-retcode) -ne 0 ]; then
+      _result="${_installationfail}"
+      BREAK="break"
+    else
+      _result="${_installationsuccess}"
+    fi
+    rm /tmp/.install-retcode
+
+    DIALOG --title "$_result" --exit-label "${_continue_label}" \
+        --textbox "/tmp/rsyncerror.log" 18 60 || return 1
+
+    # ensure the disk is synced
+    sync
+
+    if [ "${BREAK}" = "break" ]; then
+       break
+    fi
+
+    S_INSTALL=1
+    NEXTITEM=4
+
+    # automagic time!
+    # any automatic configuration should go here
+    DIALOG --infobox "${_configuringsystem}" 6 40
+    sleep 3
+
+    hd_config
+    auto_fstab
+    _system_is_installed=1
+}
+
+installsystem(){
+    SQFPARAMETER=""
+#    DIALOG --defaultno --yesno "${_installchoice}" 0 0 && SQFPARAMETER="yes"
+#    if [[ "${SQFPARAMETER}" == "yes" ]]; then
+#       installsystem_unsquash
+#    else
+       installsystem_cp
+#    fi
 }
 
 configure_system(){
@@ -4971,3 +4852,190 @@ configure_system(){
        NEXTITEM="4"
     fi
 }
+
+prepare_harddrive(){
+    S_MKFSAUTO=0
+    S_MKFS=0
+    DONE=0
+    NEXTITEM=""
+    CANCEL="1"
+    while [[ "${DONE}" = "0" ]]; do
+        if [[ -n "${NEXTITEM}" ]]; then
+            DEFAULT="--default-item ${NEXTITEM}"
+        else
+            DEFAULT=""
+        fi
+        CANCEL=""
+        dialog ${DEFAULT} --backtitle "${TITLE}" --menu "Prepare Hard Drive" 12 60 5 \
+            "1" "Auto-Prepare (erases the ENTIRE hard drive)" \
+            "2" "Partition Hard Drives" \
+            "3" "Create Software Raid, Lvm2 and Luks encryption" \
+            "4" "Set Filesystem Mountpoints" \
+            "5" "Return to Main Menu" 2>${ANSWER} || CANCEL="1"
+        NEXTITEM="$(cat ${ANSWER})"
+        [[ "${S_MKFSAUTO}" = "1" ]] && DONE=1
+        case $(cat ${ANSWER}) in
+            "1")
+                autoprepare
+                [[ "${S_MKFSAUTO}" = "1" ]] && DONE=1
+                CANCEL="0"
+                _hd_is_prepared=1
+                NEXTITEM="5";;
+            "2")
+                partition ;;
+            "3")
+                create_special ;;
+            "4")
+                PARTFINISH=""
+                ASK_MOUNTPOINTS="1"
+                mountpoints
+                CANCEL="0"
+                _hd_is_prepared=1
+                NEXTITEM="5";;
+            *)
+                DONE=1 ;;
+        esac
+    done
+    if [[ "${CANCEL}" = "1" ]]; then
+        NEXTITEM="2"
+    else
+        NEXTITEM="3"
+    fi
+}
+
+set_clock(){
+    # utc or local?
+    DIALOG --menu "${_machinetimezone}" 10 72 2 \
+        "UTC" " " \
+        "localtime" " " \
+        2>${ANSWER} || return 1
+    HARDWARECLOCK=$(cat ${ANSWER})
+
+    # timezone?
+    REGIONS=""
+    for i in $(grep '^[A-Z]' /usr/share/zoneinfo/zone.tab | cut -f 3 | sed -e 's#/.*##g'| sort -u); do
+      REGIONS="$REGIONS $i -"
+    done
+    region=""
+    zone=""
+    while [ -z "$zone" ];do
+      region=""
+      while [ -z "$region" ];do
+        :>${ANSWER}
+        DIALOG --menu "${_selectregion}" 0 0 0 $REGIONS 2>${ANSWER}
+        region=$(cat ${ANSWER})
+      done
+      ZONES=""
+      for i in $(grep '^[A-Z]' /usr/share/zoneinfo/zone.tab | grep $region/ | cut -f 3 | sed -e "s#$region/##g"| sort -u); do
+        ZONES="$ZONES $i -"
+      done
+      :>${ANSWER}
+      DIALOG --menu "${_selecttimezone}" 0 0 0 $ZONES 2>${ANSWER}
+      zone=$(cat ${ANSWER})
+    done
+    TIMEZONE="$region/$zone"
+
+    # set system clock from hwclock - stolen from rc.sysinit
+    local HWCLOCK_PARAMS=""
+
+
+    if [[ -e /run/openrc ]];then
+	local _conf_clock='clock="'${HARDWARECLOCK}'"'
+	sed -i -e "s|^.*clcok=.*|${_conf_clock}|" /etc/conf.d/hwclock
+    fi
+    if [ "$HARDWARECLOCK" = "UTC" ]; then
+	HWCLOCK_PARAMS="$HWCLOCK_PARAMS --utc"
+    else
+	HWCLOCK_PARAMS="$HWCLOCK_PARAMS --localtime"
+	if [[ -e /run/systemd ]];then
+	    echo "0.0 0.0 0.0" > /etc/adjtime &> /dev/null
+	    echo "0" >> /etc/adjtime &> /dev/null
+	    echo "LOCAL" >> /etc/adjtime &> /dev/null
+	fi
+    fi
+    if [ "$TIMEZONE" != "" -a -e "/usr/share/zoneinfo/$TIMEZONE" ]; then
+        /bin/rm -f /etc/localtime
+        #/bin/cp "/usr/share/zoneinfo/$TIMEZONE" /etc/localtime
+        ln -sf "/usr/share/zoneinfo/$TIMEZONE" /etc/localtime
+    fi
+    /usr/bin/hwclock --hctosys $HWCLOCK_PARAMS --noadjfile
+
+    if [[ -e /run/openrc ]];then
+	echo "${TIMEZONE}" > /etc/timezone
+    fi
+
+    # display and ask to set date/time
+    DIALOG --calendar "${_choosedatetime}" 0 0 0 0 0 2> ${ANSWER} || return 1
+    local _date="$(cat ${ANSWER})"
+    DIALOG --timebox "${_choosehourtime}" 0 0 2> ${ANSWER} || return 1
+    local _time="$(cat ${ANSWER})"
+    echo "date: $_date time: $_time" >$LOG
+
+    # save the time
+    # DD/MM/YYYY hh:mm:ss -> YYYY-MM-DD hh:mm:ss
+    local _datetime="$(echo "$_date" "$_time" | sed 's#\(..\)/\(..\)/\(....\) \(..\):\(..\):\(..\)#\3-\2-\1 \4:\5:\6#g')"
+    echo "setting date to: $_datetime" >$LOG
+    date -s "$_datetime" 2>&1 >$LOG
+    /usr/bin/hwclock --systohc $HWCLOCK_PARAMS --noadjfile
+
+    S_CLOCK=1
+    NEXTITEM="2"
+}
+
+mainmenu(){
+    if [ -n "${NEXTITEM}" ]; then
+        DEFAULT="--default-item ${NEXTITEM}"
+    else
+        DEFAULT=""
+    fi
+    DIALOG $DEFAULT --title " ${_mainmenulabel} " \
+        --menu "${_mainmenuhelp}" 16 55 8 \
+        "1" "${_datetimetext}" \
+        "2" "${_preparediskstext}" \
+        "3" "${_installsystemtext}" \
+        "4" "${_configuresystemtext}" \
+        "5" "${_instbootloadertext}" \
+        "6" "${_quittext}" 2>${ANSWER}
+    NEXTITEM="$(cat ${ANSWER})"
+    case $(cat ${ANSWER}) in
+        "1")
+            set_clock ;;
+        "2")
+            prepare_harddrive
+        ;;
+        "3")
+            if [ "$_hd_is_prepared" == "1" ];then
+             installsystem
+            else
+             DIALOG --msgbox "$_forgotpreparehd" 10 40
+            fi
+        ;;
+        "4")
+            if [ "$_system_is_installed" == "1" ];then
+             configure_system
+            else
+             DIALOG --msgbox "$_forgotinstalling" 10 40
+            fi
+        ;;
+        "5")
+            if [ "$_system_is_configured" == "1" ];then
+             install_bootloader
+            else
+             DIALOG --msgbox "$_forgotsystemconf" 10 40
+            fi
+        ;;
+        "6")
+            DIALOG --infobox "${_installationfinished}" 6 40
+            mkdir -p ${DESTDIR}/var/log/${manjaroiso}
+            cp /tmp/*.log ${DESTDIR}/var/log/${manjaroiso} &>/dev/null
+            cp /var/log/pacman.log ${DESTDIR}/var/log/${manjaroiso}/pacman-live.log &>/dev/null
+            _umountall &>/dev/null ; sleep 1 ; exit 0
+        ;;
+        *)
+            if DIALOG --yesno "${_cancelinstall}" 6 40;then
+            _umountall &>/dev/null ; exit 0
+            fi
+        ;;
+    esac
+}
+

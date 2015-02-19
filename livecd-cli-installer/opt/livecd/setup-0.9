@@ -4,6 +4,10 @@
 
 load_config "/opt/livecd/manjaro-tools.conf"
 
+[[ -r /opt/livecd/util-livecd.sh ]] && source /opt/livecd/util-livecd.sh
+[[ -r /opt/livecd/util-mnt.sh ]] && source /opt/livecd/util-mnt.sh
+[[ -r /opt/livecd/util-inst.sh ]] && source /opt/livecd/util-inst.sh
+
 # Basis settings
 TITLE="Manjaro Linux Installation Framework (testing)"
 PKG_OVERLAY="/opt/livecd/pkgs"
@@ -63,67 +67,6 @@ S_PRECONFIG=0   # pre configuration editing
 
 # main menu selection tracker
 NEXTITEM=""
-
-[[ -r /opt/livecd/util-livecd.sh ]] && source /opt/livecd/util-livecd.sh
-[[ -r /opt/livecd/util-mnt.sh ]] && source /opt/livecd/util-mnt.sh
-[[ -r /opt/livecd/util-inst.sh ]] && source /opt/livecd/util-inst.sh
-
-mainmenu(){
-    if [ -n "${NEXTITEM}" ]; then
-        DEFAULT="--default-item ${NEXTITEM}"
-    else
-        DEFAULT=""
-    fi
-    DIALOG $DEFAULT --title " ${_mainmenulabel} " \
-        --menu "${_mainmenuhelp}" 16 55 8 \
-        "1" "${_datetimetext}" \
-        "2" "${_preparediskstext}" \
-        "3" "${_installsystemtext}" \
-        "4" "${_configuresystemtext}" \
-        "5" "${_instbootloadertext}" \
-        "6" "${_quittext}" 2>${ANSWER}
-    NEXTITEM="$(cat ${ANSWER})"
-    case $(cat ${ANSWER}) in
-        "1")
-            set_clock ;;
-        "2")
-            prepare_harddrive
-        ;;
-        "3")
-            if [ "$_hd_is_prepared" == "1" ];then
-             installsystem
-            else
-             DIALOG --msgbox "$_forgotpreparehd" 10 40
-            fi
-        ;;
-        "4")
-            if [ "$_system_is_installed" == "1" ];then
-             configure_system
-            else
-             DIALOG --msgbox "$_forgotinstalling" 10 40
-            fi
-        ;;
-        "5")
-            if [ "$_system_is_configured" == "1" ];then
-             install_bootloader
-            else
-             DIALOG --msgbox "$_forgotsystemconf" 10 40
-            fi
-        ;;
-        "6")
-            DIALOG --infobox "${_installationfinished}" 6 40
-            mkdir -p ${DESTDIR}/var/log/${manjaroiso}
-            cp /tmp/*.log ${DESTDIR}/var/log/${manjaroiso} &>/dev/null
-            cp /var/log/pacman.log ${DESTDIR}/var/log/${manjaroiso}/pacman-live.log &>/dev/null
-            _umountall &>/dev/null ; sleep 1 ; exit 0
-        ;;
-        *)
-            if DIALOG --yesno "${_cancelinstall}" 6 40;then
-            _umountall &>/dev/null ; exit 0
-            fi
-        ;;
-    esac
-}
 
 #####################
 ## begin execution ##
