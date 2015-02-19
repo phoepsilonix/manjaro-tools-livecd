@@ -302,7 +302,7 @@ hd_config(){
 		DIALOG --infobox "${_setupsystemd}" 6 40
 		sleep 3
 		for svc in ${start_systemd[@]}; do
-			chroot ${DESTDIR} systemctl enable $svc
+			chroot ${DESTDIR} systemctl enable $svc &>/dev/null
 		done
 
 # 		chroot ${DESTDIR} systemctl enable org.cups.cupsd.service &>/dev/null
@@ -313,7 +313,7 @@ hd_config(){
 		DIALOG --infobox "${_setupopenrc}" 6 40
 		sleep 3
 		for svc in ${start_openrc[@]}; do
-			chroot ${DESTDIR} rc-update add $svc default
+			chroot ${DESTDIR} rc-update add $svc default &>/dev/null
 		done
 # 		chroot ${DESTDIR} rc-update add cups default &>/dev/null
 # 		chroot ${DESTDIR} rc-update add cronie default &>/dev/null
