@@ -2,13 +2,14 @@
 
 [[ -r /opt/livecd/util.sh ]] && source /opt/livecd/util.sh
 
-load_config "/opt/livecd/manjaro-tools.conf"
+load_profile_config "/opt/livecd/profile.conf"
 
 VER=0.9.0
 # Basis settings
 TITLE="Manjaro Linux Installation Framework $VER"
 PKG_OVERLAY="/opt/livecd/pkgs"
 #DIALOGRC="./setuprc"
+arch=$(uname -m)
 
 if [ -e "/bootmnt/${install_dir}/${arch}/${custom}-image.sqfs" ] ; then
 	DESKTOP_IMG="${custom}-image"
@@ -20,7 +21,7 @@ LOG="/dev/tty8"
 # don't use /mnt because it's intended to mount other things there!
 mkdir -p /install
 DESTDIR="/install"
-arch=$(uname -m)
+
 EDITOR="nano"
 _BLKID="blkid -c /dev/null"
 
