@@ -9,7 +9,9 @@ VER=0.9.0
 TITLE="Manjaro Linux Installation Framework $VER"
 PKG_OVERLAY="/opt/livecd/pkgs"
 #DIALOGRC="./setuprc"
+
 arch=$(uname -m)
+username=''
 
 if [ -e "/bootmnt/${install_dir}/${arch}/${custom}-image.sqfs" ] ; then
 	DESKTOP_IMG="${custom}-image"
@@ -26,9 +28,9 @@ EDITOR="nano"
 _BLKID="blkid -c /dev/null"
 
 # name of the kernel image
-VMLINUZ="vmlinuz-${manjaro_kernel_ver}-${arch}"
+VMLINUZ="vmlinuz-${dist_kernel_ver}-${arch}"
 # name of the initramfs filesystem
-INITRAMFS="initramfs-${manjaro_kernel_ver}-${arch}"
+INITRAMFS="initramfs-${dist_kernel_ver}-${arch}"
 
 # abstract the common pacman args
 PACMAN="pacman --root ${DESTDIR} --config /etc/pacman.conf --noconfirm --noprogressbar"
@@ -69,8 +71,6 @@ S_PRECONFIG=0   # pre configuration editing
 
 # main menu selection tracker
 NEXTITEM=""
-
-username=''
 
 [[ -r /opt/livecd/util-livecd.sh ]] && source /opt/livecd/util-livecd.sh
 [[ -r /opt/livecd/util-mnt.sh ]] && source /opt/livecd/util-mnt.sh
@@ -3996,9 +3996,9 @@ mainmenu(){
 		;;
 		"6")
 			DIALOG --infobox "${_installationfinished}" 6 40
-			mkdir -p ${DESTDIR}/var/log/${manjaroiso}
-			cp /tmp/*.log ${DESTDIR}/var/log/${manjaroiso} &>/dev/null
-			cp /var/log/pacman.log ${DESTDIR}/var/log/${manjaroiso}/pacman-live.log &>/dev/null
+			mkdir -p ${DESTDIR}/var/log/${dist_iso}
+			cp /tmp/*.log ${DESTDIR}/var/log/${dist_iso} &>/dev/null
+			cp /var/log/pacman.log ${DESTDIR}/var/log/${dist_iso}/pacman-live.log &>/dev/null
 			_umountall &>/dev/null ; sleep 1 ; exit 0
 		;;
 		*)

@@ -489,7 +489,7 @@ run_mkinitcpio(){
 	( \
 		touch /tmp/setup-mkinitcpio-running
 		echo "${_runninginitcpio}" >> /tmp/mkinitcpio.log; \
-		chroot "$DESTDIR" /usr/bin/mkinitcpio -p "$manjaro_kernel" >>/tmp/mkinitcpio.log 2>&1
+		chroot "$DESTDIR" /usr/bin/mkinitcpio -p "${dist_kernel}" >>/tmp/mkinitcpio.log 2>&1
 		echo >> /tmp/mkinitcpio.log
 		rm -f /tmp/setup-mkinitcpio-running
 	) &
