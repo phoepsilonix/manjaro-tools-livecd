@@ -9,6 +9,7 @@ VER=0.9.0
 TITLE="Manjaro Linux Installation Framework $VER"
 PKG_OVERLAY="/opt/livecd/pkgs"
 #DIALOGRC="./setuprc"
+arch=$(uname -m)
 
 if [ -e "/bootmnt/${install_dir}/${arch}/${custom}-image.sqfs" ] ; then
 	DESKTOP_IMG="${custom}-image"
@@ -20,7 +21,7 @@ LOG="/dev/tty8"
 # don't use /mnt because it's intended to mount other things there!
 mkdir -p /install
 DESTDIR="/install"
-arch=$(uname -m)
+
 EDITOR="nano"
 _BLKID="blkid -c /dev/null"
 
