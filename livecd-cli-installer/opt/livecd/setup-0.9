@@ -13,7 +13,7 @@ PKG_OVERLAY="/opt/livecd/pkgs"
 arch=$(uname -m)
 username=''
 
-if [ -e "/bootmnt/${install_dir}/${arch}/${custom}-image.sqfs" ] ; then
+if [ -e "/bootmnt/${iso_name}/${arch}/${custom}-image.sqfs" ] ; then
 	DESKTOP_IMG="${custom}-image"
 fi
 
@@ -28,9 +28,9 @@ EDITOR="nano"
 _BLKID="blkid -c /dev/null"
 
 # name of the kernel image
-VMLINUZ="vmlinuz-${dist_kernel_ver}-${arch}"
+VMLINUZ="vmlinuz-${kernel_ver}-${arch}"
 # name of the initramfs filesystem
-INITRAMFS="initramfs-${dist_kernel_ver}-${arch}"
+INITRAMFS="initramfs-${kernel_ver}-${arch}"
 
 # abstract the common pacman args
 PACMAN="pacman --root ${DESTDIR} --config /etc/pacman.conf --noconfirm --noprogressbar"
