@@ -12,6 +12,7 @@ PKG_OVERLAY="/opt/livecd/pkgs"
 
 arch=$(uname -m)
 username=''
+kernel_ver=${kernel#*linux}
 
 if [ -e "/bootmnt/${iso_name}/${arch}/${custom}-image.sqfs" ] ; then
 	DESKTOP_IMG="${custom}-image"
