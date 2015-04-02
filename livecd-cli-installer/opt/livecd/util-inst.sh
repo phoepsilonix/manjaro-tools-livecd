@@ -836,12 +836,12 @@ _config_system(){
 				"/etc/hosts.deny"           "${_hostsdenytext}" \
 				"/etc/hosts.allow"          "${_hostsallowtext}" \
 				"/etc/locale.gen"           "${_localegentext}" \
-				"/etc/locale.conf"           "${_localeconftext}" \
-				"/etc/environment"           "${_environmenttext}" \
+				"/etc/locale.conf"          "${_localeconftext}" \
+				"/etc/environment"          "${_environmenttext}" \
 				"/etc/pacman-mirrors.conf"  "${_mirrorconftext}" \
 				"/etc/pacman.d/mirrorlist"  "${_mirrorlisttext}" \
 				"/etc/X11/xorg.conf.d/10-evdev.conf"  "${_xorgevdevconftext}" \
-				"/etc/keyboard.conf"        "${_vconsoletext}" \
+				"/etc/vconsole.conf"        "${_vconsoletext}" \
 				"${_return_label}"        "${_return_label}" 2>${ANSWER} || NEXTITEM="${_return_label}"
 			NEXTITEM="$(cat ${ANSWER})"
 		else
@@ -863,6 +863,7 @@ _config_system(){
 				"/etc/pacman-mirrors.conf"  "${_mirrorconftext}" \
 				"/etc/pacman.d/mirrorlist"  "${_mirrorlisttext}" \
 				"/etc/X11/xorg.conf.d/10-evdev.conf"  "${_xorgevdevconftext}" \
+				"/etc/conf.d/keymaps"       "${_vconsoletext}" \
 				"${_return_label}"        "${_return_label}" 2>${ANSWER} || NEXTITEM="${_return_label}"
 			NEXTITEM="$(cat ${ANSWER})"
 		fi
