@@ -66,7 +66,7 @@ dokeymap(){
     # Setup x11 config file
     local KBLAYOUT=$(get_layout)
     local KEYMAP=$(cat /tmp/.keymap | sed -e 's/\..*//g')
-    write_x11_config
+    write_x11_config /install
 
 S_NEXTITEM=2
 }
