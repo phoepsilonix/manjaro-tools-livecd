@@ -248,22 +248,23 @@ hd_config(){
 	chroot ${DESTDIR} alsactl -f /etc/asound.state store &>/dev/null
 
 	DIALOG --infobox "${_syncpacmandb}" 0 0
-	# enable default mirror
+	sleep 3
+
+	# Backup the default mirrorlist
 	cp -f ${DESTDIR}/etc/pacman.d/mirrorlist ${DESTDIR}/etc/pacman.d/mirrorlist.backup
+
 	if [ ! -z "$(check_ping)" ] ; then
+		# Setup mirrors and sync db
 		chroot ${DESTDIR} pacman-mirrors -g &>/dev/null
+		chroot ${DESTDIR} pacman -Syy &> /dev/null
 	fi
 
 	# copy random generated keys by pacman-init to target
 	if [ -e "${DESTDIR}/etc/pacman.d/gnupg" ] ; then
 		rm -rf ${DESTDIR}/etc/pacman.d/gnupg &>/dev/null
 	fi
-	cp -a /etc/pacman.d/gnupg ${DESTDIR}/etc/pacman.d/
 	pacman-key --populate archlinux manjaro &>/dev/null
-
-	# sync pacman databases
-	sleep 3
-	chroot ${DESTDIR} pacman -Syy &> /dev/null
+	cp -a /etc/pacman.d/gnupg ${DESTDIR}/etc/pacman.d/
 
 	# Install drivers
 
