@@ -3039,13 +3039,17 @@ EOF
 	DIALOG --infobox "Installing the ${SYSLINUX} bootloader..." 0 0
 	! [[ -d "${DESTDIR}/boot/${SYSLINUX_DIR}" ]] && mkdir -p "${DESTDIR}/boot/${SYSLINUX_DIR}"
 	cp -f "${TEMPDIR}/${SYSLINUX_CONF}" "${DESTDIR}/boot/${SYSLINUX_DIR}/${SYSLINUX_CONF}"
-	cp -f "${DESTDIR}/usr/lib/syslinux"/*.c32 "${DESTDIR}/boot/${SYSLINUX_DIR}"
+	if [[ "${GUID_DETECTED}" == '1' ]]; then
+		cp -f "${DESTDIR}/usr/lib/syslinux/efi64/"*.c32 "${DESTDIR}/boot/${SYSLINUX_DIR}"
+	else
+		cp -f "${DESTDIR}/usr/lib/syslinux/bios/"*.c32 "${DESTDIR}/boot/${SYSLINUX_DIR}"
+	fi
 }
 
 # finish_syslinux
 finish_syslinux (){
-	MBR="${DESTDIR}/usr/lib/syslinux/mbr.bin"
-	GPTMBR="${DESTDIR}/usr/lib/syslinux/gptmbr.bin"
+	MBR="${DESTDIR}/usr/lib/syslinux/bios/mbr.bin"
+	GPTMBR="${DESTDIR}/usr/lib/syslinux/bios/gptmbr.bin"
 
 	CHECKDEV=$(echo ${ROOTDEV} | sed 's|/dev/||g')
 
