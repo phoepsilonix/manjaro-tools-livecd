@@ -12,7 +12,6 @@ PKG_OVERLAY="/opt/livecd/pkgs"
 
 arch=$(uname -m)
 username=''
-kernel_ver=${kernel#*linux}
 
 if [ -e "/bootmnt/${iso_name}/${arch}/${custom}-image.sqfs" ] ; then
 	DESKTOP_IMG="${custom}-image"
@@ -28,10 +27,14 @@ DESTDIR="/install"
 EDITOR="nano"
 _BLKID="blkid -c /dev/null"
 
+# load kernel preset
+source /etc/mkinitcpio.d/${kernel}.preset
+
 # name of the kernel image
-VMLINUZ="vmlinuz-${kernel_ver}-${arch}"
+VMLINUZ=${ALL_kver#*/boot/}
 # name of the initramfs filesystem
-INITRAMFS="initramfs-${kernel_ver}-${arch}"
+INITRAMFS=${default_image#*/boot/}
+INITRAMFS_FALLBACK=${fallback_image#*/boot/}
 
 # abstract the common pacman args
 PACMAN="pacman --root ${DESTDIR} --config /etc/pacman.conf --noconfirm --noprogressbar"
@@ -2614,19 +2617,21 @@ doefistub_uefi_common(){
 		RAID_ON_LVM=""
 		common_bootloader_checks
 
-		_EFISTUB_KERNEL="${VMLINUZ/linux/manjaro}.efi"
-		[[ "${_EFILINUX}" == "1" ]] && _EFISTUB_KERNEL="${VMLINUZ/linux/manjaro}"
+		_EFISTUB_VMLINUZ="${VMLINUZ/linux/manjaro}"
+		_EFISTUB_KERNEL="${_EFISTUB_VMLINUZ#*.img}.efi"
+		[[ "${_EFILINUX}" == "1" ]] && _EFISTUB_KERNEL="${_EFISTUB_VMLINUZ#*.img}"
 		_EFISTUB_INITRAMFS="${INITRAMFS/linux/manjaro}"
+		_EFISTUB_INITRAMFS_FALLBACK="${INITRAMFS_FALLBACK/linux/manjaro}"
 
 		mkdir -p "${DESTDIR}/boot/efi/EFI/manjaro/"
 
 		rm -f "${DESTDIR}/boot/efi/EFI/manjaro/${_EFISTUB_KERNEL}"
-		rm -f "${DESTDIR}/boot/efi/EFI/manjaro/${_EFISTUB_INITRAMFS}.img"
-		rm -f "${DESTDIR}/boot/efi/EFI/manjaro/${_EFISTUB_INITRAMFS}-fallback.img"
+		rm -f "${DESTDIR}/boot/efi/EFI/manjaro/${_EFISTUB_INITRAMFS}"
+		rm -f "${DESTDIR}/boot/efi/EFI/manjaro/${_EFISTUB_INITRAMFS_FALLBACK}"
 
 		cp -f "${DESTDIR}/boot/${VMLINUZ}" "${DESTDIR}/boot/efi/EFI/manjaro/${_EFISTUB_KERNEL}"
-		cp -f "${DESTDIR}/boot/${INITRAMFS}.img" "${DESTDIR}/boot/efi/EFI/manjaro/${_EFISTUB_INITRAMFS}.img"
-		cp -f "${DESTDIR}/boot/${INITRAMFS}-fallback.img" "${DESTDIR}/boot/efi/EFI/manjaro/${_EFISTUB_INITRAMFS}-fallback.img"
+		cp -f "${DESTDIR}/boot/${INITRAMFS}" "${DESTDIR}/boot/efi/EFI/manjaro/${_EFISTUB_INITRAMFS}"
+		cp -f "${DESTDIR}/boot/${INITRAMFS_FALLBACK}" "${DESTDIR}/boot/efi/EFI/manjaro/${_EFISTUB_INITRAMFS_FALLBACK}"
 
 		#######################
 
@@ -2635,7 +2640,7 @@ doefistub_uefi_common(){
 Description=Copy EFISTUB Kernel and Initramfs to UEFISYS Partition
 
 [Path]
-PathChanged=/boot/${INITRAMFS}-fallback.img
+PathChanged=/boot/${INITRAMFS_FALLBACK}
 Unit=efistub_copy.service
 
 [Install]
@@ -2649,8 +2654,8 @@ Description=Copy EFISTUB Kernel and Initramfs to UEFISYS Partition
 [Service]
 Type=oneshot
 ExecStart=/bin/cp -f /boot/${VMLINUZ} /boot/efi/EFI/manjaro/${_EFISTUB_KERNEL}
-ExecStart=/bin/cp -f /boot/${INITRAMFS}.img /boot/efi/EFI/manjaro/${_EFISTUB_INITRAMFS}.img
-ExecStart=/bin/cp -f /boot/${INITRAMFS}-fallback.img /boot/efi/EFI/manjaro/${_EFISTUB_INITRAMFS}-fallback.img
+ExecStart=/bin/cp -f /boot/${INITRAMFS} /boot/efi/EFI/manjaro/${_EFISTUB_INITRAMFS}
+ExecStart=/bin/cp -f /boot/${INITRAMFS_FALLBACK} /boot/efi/EFI/manjaro/${_EFISTUB_INITRAMFS_FALLBACK}
 CONFEOF
 
         chroot "${DESTDIR}" /usr/bin/systemctl enable efistub_copy.path
@@ -2659,12 +2664,12 @@ CONFEOF
 
             cat << CONFEOF > "${DESTDIR}/usr/local/bin/efistub_copy.sh"
 /bin/cp -f /boot/${VMLINUZ} /boot/efi/EFI/manjaro/${_EFISTUB_KERNEL}
-/bin/cp -f /boot/${INITRAMFS}.img /boot/efi/EFI/manjaro/${_EFISTUB_INITRAMFS}.img
-/bin/cp -f /boot/${INITRAMFS}-fallback.img /boot/efi/EFI/manjaro/${_EFISTUB_INITRAMFS}-fallback.img
+/bin/cp -f /boot/${INITRAMFS} /boot/efi/EFI/manjaro/${_EFISTUB_INITRAMFS}
+/bin/cp -f /boot/${INITRAMFS_FALLBACK} /boot/efi/EFI/manjaro/${_EFISTUB_INITRAMFS_FALLBACK}
 CONFEOF
 
             cat << CONFEOF > "${DESTDIR}/etc/incron.d/efistub_copy.conf"
-/boot/${INITRAMFS}-fallback.img IN_CLOSE_WRITE /usr/local/bin/efistub_copy.sh
+/boot/${INITRAMFS_FALLBACK} IN_CLOSE_WRITE /usr/local/bin/efistub_copy.sh
 CONFEOF
 
             DIALOG --msgbox "Add incrond to the DAEMONS list in /etc/rc.conf ." 0 0
@@ -2695,12 +2700,12 @@ CONFEOF
 		[[ "${_rootpart}" == "" ]] && _rootpart="${_rootdev}"
 
 		## TODO: All complex stuff like dmraid, cyptsetup etc. for kernel parameters - common_bootloader_checks ?
-		_PARAMETERS_UNMOD="root=${_rootpart} ${ROOTFLAGS} rootfstype=${ROOTFS} ${RAIDARRAYS} ${CRYPTSETUP} ro pci=nocrs add_efi_memmap initrd=\\EFI\\manjaro\\${_EFISTUB_INITRAMFS}.img"
+		_PARAMETERS_UNMOD="root=${_rootpart} ${ROOTFLAGS} rootfstype=${ROOTFS} ${RAIDARRAYS} ${CRYPTSETUP} ro pci=nocrs add_efi_memmap initrd=\\EFI\\manjaro\\${_EFISTUB_INITRAMFS}"
 		_PARAMETERS_MOD=$(echo "${_PARAMETERS_UNMOD}" | sed -e 's#   # #g' | sed -e 's#  # #g')
 
 		if [[ "${_EFILINUX}" == "1" ]]; then
 			cat << CONFEOF > "${DESTDIR}/boot/efi/EFI/efilinux/efilinux.cfg"
--f \\EFI\\manjaro\\${_EFISTUB_KERNEL} ${_PARAMETERS_MOD} initrd=\\EFI\\manjaro\\${_EFISTUB_INITRAMFS}-fallback.img
+-f \\EFI\\manjaro\\${_EFISTUB_KERNEL} ${_PARAMETERS_MOD} initrd=\\EFI\\manjaro\\${_EFISTUB_INITRAMFS_FALLBACK}
 CONFEOF
         fi
 
@@ -2710,8 +2715,8 @@ CONFEOF
 
         ###################################
 
-		if [[ -e "${DESTDIR}/boot/efi/EFI/manjaro/${_EFISTUB_KERNEL}" ]] && [[ -e "${DESTDIR}/boot/efi/EFI/manjaro/${_EFISTUB_INITRAMFS}.img" ]]; then
-			DIALOG --msgbox "The EFISTUB Kernel and initramfs have been copied to /boot/efi/EFI/manjaro/${_EFISTUB_KERNEL} and /boot/efi/EFI/manjaro/${_EFISTUB_INITRAMFS}.img respectively." 0 0
+		if [[ -e "${DESTDIR}/boot/efi/EFI/manjaro/${_EFISTUB_KERNEL}" ]] && [[ -e "${DESTDIR}/boot/efi/EFI/manjaro/${_EFISTUB_INITRAMFS}" ]]; then
+			DIALOG --msgbox "The EFISTUB Kernel and initramfs have been copied to /boot/efi/EFI/manjaro/${_EFISTUB_KERNEL} and /boot/efi/EFI/manjaro/${_EFISTUB_INITRAMFS} respectively." 0 0
 
 			if [[ "${_EFILINUX}" == "1" ]]; then
 				DIALOG --msgbox "You will now be put into the editor to edit efilinux.cfg . After you save your changes, exit the editor." 0 0
@@ -2782,7 +2787,7 @@ GUMEOF
         cat << GUMEOF > "${DESTDIR}/boot/efi/loader/entries/manjaro-lts-fallback.conf"
 title   Manjaro Linux LTS via EFILINUX  - fallback initramfs
 efi     /EFI/efilinux/efilinux${_SPEC_UEFI_ARCH}.efi
-options $(cat "${DESTDIR}/boot/efi/EFI/efilinux/efilinux.cfg") initrd=\\EFI\\manjaro\\${_EFISTUB_INITRAMFS}-fallback.img
+options $(cat "${DESTDIR}/boot/efi/EFI/efilinux/efilinux.cfg") initrd=\\EFI\\manjaro\\${_EFISTUB_INITRAMFS_FALLBACK}
 GUMEOF
 
         cat << GUMEOF > "${DESTDIR}/boot/efi/loader/loader.conf"
@@ -2794,14 +2799,14 @@ GUMEOF
         cat << GUMEOF > "${DESTDIR}/boot/efi/loader/entries/manjaro.conf"
 title   Manjaro Linux
 linux   /EFI/manjaro/${_EFISTUB_KERNEL}
-initrd  /EFI/manjaro/${_EFISTUB_INITRAMFS}.img
+initrd  /EFI/manjaro/${_EFISTUB_INITRAMFS}
 options ${_PARAMETERS_MOD}
 GUMEOF
 
         cat << GUMEOF > "${DESTDIR}/boot/efi/loader/entries/manjaro-fallback.conf"
 title   Manjaro Linux fallback initramfs
 linux   /EFI/manjaro/${_EFISTUB_KERNEL}
-initrd  /EFI/manjaro/${_EFISTUB_INITRAMFS}-fallback.img
+initrd  /EFI/manjaro/${_EFISTUB_INITRAMFS_FALLBACK}
 options ${_PARAMETERS_MOD}
 GUMEOF
 
@@ -2884,7 +2889,7 @@ menuentry "Manjaro Linux LTS via EFILINUX" {
 menuentry "Manjaro Linux LTS via EFILINUX - fallback initramfs" {
 	icon /EFI/refind/icons/os_linux.icns
 	loader /EFI/efilinux/efilinux${_SPEC_UEFI_ARCH}.efi
-	options "$(cat "${DESTDIR}/boot/efi/EFI/efilinux/efilinux.cfg") initrd=\\EFI\\manjaro\\${_EFISTUB_INITRAMFS}-fallback.img"
+	options "$(cat "${DESTDIR}/boot/efi/EFI/efilinux/efilinux.cfg") initrd=\\EFI\\manjaro\\${_EFISTUB_INITRAMFS_FALLBACK}"
 }
 
 REFINDEOF
@@ -2892,7 +2897,7 @@ REFINDEOF
     else
         cat << REFINDEOF > "${DESTDIR}/boot/efi/EFI/manjaro/refind_linux.conf"
 "Boot with Defaults"              "${_PARAMETERS_MOD}"
-"Boot with fallback initramfs"    "${_PARAMETERS_MOD} initrd=\\EFI\\manjaro\\${_EFISTUB_INITRAMFS}-fallback.img"
+"Boot with fallback initramfs"    "${_PARAMETERS_MOD} initrd=\\EFI\\manjaro\\${_EFISTUB_INITRAMFS_FALLBACK}"
 REFINDEOF
 
     fi
@@ -3007,9 +3012,9 @@ EOF
 	echo "LINUX ${subdir}/${VMLINUZ}" >> "${TEMPDIR}/${SYSLINUX_CONF}"
 
 	if [[ "${NAME_SCHEME_PARAMETER}" == "FSUUID" || "${NAME_SCHEME_PARAMETER}" == "FSLABEL" ]]; then
-		echo "append initrd=${subdir}/${INITRAMFS}.img root=${_rootpart} ${ROOTFLAGS} rootfstype=${ROOTFS} ${RAIDARRAYS} ${CRYPTSETUP} ro" | sed -e 's#  # #g' >> "${TEMPDIR}/${SYSLINUX_CONF}"
+		echo "append initrd=${subdir}/${INITRAMFS} root=${_rootpart} ${ROOTFLAGS} rootfstype=${ROOTFS} ${RAIDARRAYS} ${CRYPTSETUP} ro" | sed -e 's#  # #g' >> "${TEMPDIR}/${SYSLINUX_CONF}"
 	else
-		echo "append initrd=${subdir}/${INITRAMFS}.img root=${PART_ROOT} ${ROOTFLAGS} rootfstype=${ROOTFS} ${RAIDARRAYS} ${CRYPTSETUP} ro" | sed -e 's#  # #g' >> "${TEMPDIR}/${SYSLINUX_CONF}"
+		echo "append initrd=${subdir}/${INITRAMFS} root=${PART_ROOT} ${ROOTFLAGS} rootfstype=${ROOTFS} ${RAIDARRAYS} ${CRYPTSETUP} ro" | sed -e 's#  # #g' >> "${TEMPDIR}/${SYSLINUX_CONF}"
 	fi
 
 	echo "label fallback" >> "${TEMPDIR}/${SYSLINUX_CONF}"
@@ -3020,9 +3025,9 @@ EOF
 	echo "LINUX ${subdir}/${VMLINUZ}" >> "${TEMPDIR}/${SYSLINUX_CONF}"
 
 	if [[ "${NAME_SCHEME_PARAMETER}" == "FSUUID" || "${NAME_SCHEME_PARAMETER}" == "FSLABEL" ]]; then
-		echo "append initrd=${subdir}/${INITRAMFS}-fallback.img root=${_rootpart} ${ROOTFLAGS} rootfstype=${ROOTFS} ${RAIDARRAYS} ${CRYPTSETUP}" | sed -e 's#  # #g' >> "${TEMPDIR}/${SYSLINUX_CONF}"
+		echo "append initrd=${subdir}/${INITRAMFS_FALLBACK} root=${_rootpart} ${ROOTFLAGS} rootfstype=${ROOTFS} ${RAIDARRAYS} ${CRYPTSETUP}" | sed -e 's#  # #g' >> "${TEMPDIR}/${SYSLINUX_CONF}"
 	else
-		echo "append initrd=${subdir}/${INITRAMFS}-fallback.img root=${PART_ROOT} ${ROOTFLAGS} rootfstype=${ROOTFS} ${RAIDARRAYS} ${CRYPTSETUP}" | sed -e 's#  # #g' >> "${TEMPDIR}/${SYSLINUX_CONF}"
+		echo "append initrd=${subdir}/${INITRAMFS_FALLBACK} root=${PART_ROOT} ${ROOTFLAGS} rootfstype=${ROOTFS} ${RAIDARRAYS} ${CRYPTSETUP}" | sed -e 's#  # #g' >> "${TEMPDIR}/${SYSLINUX_CONF}"
 	fi
 
 	# edit config file
@@ -3311,7 +3316,7 @@ menuentry "Manjaro Linux" {
 	set gfxpayload="keep"
 	${GRUB_ROOT_DRIVE}
 	${LINUX_MOD_COMMAND}
-	initrd ${subdir}/${INITRAMFS}.img
+	initrd ${subdir}/${INITRAMFS}
 }
 
 EOF
@@ -3325,7 +3330,7 @@ menuentry "Manjaro Linux Fallback" {
 	set gfxpayload="keep"
 	${GRUB_ROOT_DRIVE}
 	${LINUX_MOD_COMMAND}
-	initrd ${subdir}/${INITRAMFS}-fallback.img
+	initrd ${subdir}/${INITRAMFS_FALLBACK}
 }
 
 EOF
