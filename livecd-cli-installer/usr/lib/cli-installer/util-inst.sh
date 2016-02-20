@@ -268,7 +268,7 @@ hd_config(){
 
 	# Install drivers
 
-	if [ -e "/opt/livecd/pacman-gfx.conf" ] ; then
+	if [ -e "/opt/live/pacman-gfx.conf" ] ; then
 		DIALOG --infobox "${_installvideodriver}"  6 40
 
 		mkdir -p ${DESTDIR}/opt/livecd
@@ -278,21 +278,21 @@ hd_config(){
 		# Install xf86-video driver
 		if  [ "${USENONFREE}" == "yes" ] || [ "${USENONFREE}" == "true" ]; then
 			if  [ "${VIDEO}" == "vesa" ]; then
-				chroot ${DESTDIR} mhwd --install pci video-vesa --pmconfig "/opt/livecd/pacman-gfx.conf" &>/dev/null
+				chroot ${DESTDIR} mhwd --install pci video-vesa --pmconfig "/opt/live/pacman-gfx.conf" &>/dev/null
 			else
-				chroot ${DESTDIR} mhwd --auto pci nonfree 0300 --pmconfig "/opt/livecd/pacman-gfx.conf" &>/dev/null
+				chroot ${DESTDIR} mhwd --auto pci nonfree 0300 --pmconfig "/opt/live/pacman-gfx.conf" &>/dev/null
 			fi
 		else
 			if  [ "${VIDEO}" == "vesa" ]; then
-				chroot ${DESTDIR} mhwd --install pci video-vesa --pmconfig "/opt/livecd/pacman-gfx.conf" &>/dev/null
+				chroot ${DESTDIR} mhwd --install pci video-vesa --pmconfig "/opt/live/pacman-gfx.conf" &>/dev/null
 			else
-				chroot ${DESTDIR} mhwd --auto pci free 0300 --pmconfig "/opt/livecd/pacman-gfx.conf" &>/dev/null
+				chroot ${DESTDIR} mhwd --auto pci free 0300 --pmconfig "/opt/live/pacman-gfx.conf" &>/dev/null
 			fi
 		fi
 
 		# Install network drivers
-		chroot ${DESTDIR} mhwd --auto pci free 0200 --pmconfig "/opt/livecd/pacman-gfx.conf" &>/dev/null
-		chroot ${DESTDIR} mhwd --auto pci free 0280 --pmconfig "/opt/livecd/pacman-gfx.conf" &>/dev/null
+		chroot ${DESTDIR} mhwd --auto pci free 0200 --pmconfig "/opt/live/pacman-gfx.conf" &>/dev/null
+		chroot ${DESTDIR} mhwd --auto pci free 0280 --pmconfig "/opt/live/pacman-gfx.conf" &>/dev/null
 
 		umount ${DESTDIR}/opt/livecd
 		rmdir ${DESTDIR}/opt/livecd
@@ -648,16 +648,16 @@ installsystem(){
 }
 
 set_language(){
-	if [[ -e /opt/livecd/lg ]]; then
-		/opt/livecd/lg --setup
+	if [[ -e /usr/bin/lg ]]; then
+		/usr/bin/lg --setup
 	else
 		DIALOG --msgbox "Error:\nlg script not found, aborting language setting" 0 0
 	fi
 }
 
 set_keyboard(){
-	if [[ -e /opt/livecd/km ]]; then
-		/opt/livecd/km --setup
+	if [[ -e /usr/bin/km ]]; then
+		/usr/bin/km --setup
 	else
 		DIALOG --msgbox "Error:\nkm script not found, aborting keyboard and console setting" 0 0
 	fi
