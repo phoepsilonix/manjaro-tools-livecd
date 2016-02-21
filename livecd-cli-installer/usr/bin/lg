@@ -92,7 +92,7 @@ export LANG=en_US.UTF-8
 export LC_MESSAGES=en_US.UTF-8
 
 # Translation
-[[ -r /usr/lib/cli-installer/util-livecd.sh ]] && source /usr/lib/cli-installer/util-livecd.sh
+[[ -r /opt/live/util-live.sh ]] && source /opt/live/util-live.sh
 
 LOCALE=$(get_country)
 
