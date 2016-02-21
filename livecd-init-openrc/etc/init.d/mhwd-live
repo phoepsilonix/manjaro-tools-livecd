@@ -5,7 +5,7 @@
 #description="Manjaro livecd mhwd-live script"
 
 depend() {
-    need livecd
+    need manjaro-live
     before xdm
     after pacman-init
 }

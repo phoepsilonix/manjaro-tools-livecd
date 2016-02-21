@@ -271,9 +271,9 @@ hd_config(){
 	if [ -e "/opt/live/pacman-gfx.conf" ] ; then
 		DIALOG --infobox "${_installvideodriver}"  6 40
 
-		mkdir -p ${DESTDIR}/opt/livecd
-		mount -o bind /opt/livecd ${DESTDIR}/opt/livecd > /tmp/mount.pkgs.log
-		ls ${DESTDIR}/opt/livecd >> /tmp/mount.pkgs.log
+		mkdir -p ${DESTDIR}/opt/live
+		mount -o bind /opt/live ${DESTDIR}/opt/live > /tmp/mount.pkgs.log
+		ls ${DESTDIR}/opt/live >> /tmp/mount.pkgs.log
 
 		# Install xf86-video driver
 		if  [ "${USENONFREE}" == "yes" ] || [ "${USENONFREE}" == "true" ]; then
@@ -294,8 +294,8 @@ hd_config(){
 		chroot ${DESTDIR} mhwd --auto pci free 0200 --pmconfig "/opt/live/pacman-gfx.conf" &>/dev/null
 		chroot ${DESTDIR} mhwd --auto pci free 0280 --pmconfig "/opt/live/pacman-gfx.conf" &>/dev/null
 
-		umount ${DESTDIR}/opt/livecd
-		rmdir ${DESTDIR}/opt/livecd
+		umount ${DESTDIR}/opt/live
+		rmdir ${DESTDIR}/opt/live
 	fi
 
 	# setup system services

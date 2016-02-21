@@ -1,6 +1,6 @@
 #!/bin/bash
 
-[[ -r /opt/live/util.sh ]] && source /opt/live/util.sh
+[[ -r /usr/lib/manjaro-tools/util.sh ]] && source /usr/lib/manjaro-tools/util.sh
 
 load_profile_config "/opt/live/profile.conf"
 

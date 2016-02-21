@@ -9,8 +9,8 @@ depend() {
 }
 
 start() {
-	ebegin "Starting livecd script"
-	# run the livecd script
-	/usr/bin/livecd
+	ebegin "Starting manjaro live script"
+	# run the manjaro live script
+	/usr/bin/manjaro-live
 	eend $?
 }
