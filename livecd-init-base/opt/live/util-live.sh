@@ -9,8 +9,6 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-# this util-live.sh gets copied to live-image
-
 kernel_cmdline(){
 	for param in $(/bin/cat /proc/cmdline); do
 		case "${param}" in
@@ -36,7 +34,7 @@ get_layout(){
 }
 
 find_legacy_keymap(){
-	file="/usr/share/manjaro-tools/kbd-model-map"
+	file="opt/live/kbd-model-map"
 	while read -r line || [[ -n $line ]]; do
 		if [[ -z $line ]] || [[ $line == \#* ]]; then
 			continue
