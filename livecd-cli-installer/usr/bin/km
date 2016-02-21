@@ -114,11 +114,13 @@ export LC_MESSAGES=en_US.UTF-8
 
 LOCALE=$(get_country)
 
+DATADIR='/usr/share/cli-installer'
+
 # English
-source /usr/share/cli-installer/km-en.lng
+source ${DATADIR}/km-en.lng
 # Turkish
 if [ "${LOCALE}" = "tr_TR" ]; then
-   source /usr/share/cli-installer/km-tr.lng
+   source ${DATADIR}/km-tr.lng
 fi
 
 ANSWER="/tmp/.km"

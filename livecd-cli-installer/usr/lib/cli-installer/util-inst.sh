@@ -342,7 +342,7 @@ hd_config(){
 	echo "BROWSER=/usr/bin/xdg-open" >> ${DESTDIR}/etc/skel/.bashrc
 	echo "BROWSER=/usr/bin/xdg-open" >> ${DESTDIR}/etc/profile
 	# add TERM var
-	if [ -e "/bootmnt/${iso_name}/${arch}/mate-image.sqfs" ] ; then
+	if [ -e "${img_path}/mate-image.sqfs" ] ; then
 		echo "TERM=mate-terminal" >> ${DESTDIR}/etc/environment
 		echo "TERM=mate-terminal" >> ${DESTDIR}/etc/profile
 	fi
@@ -422,7 +422,7 @@ run_unsquashfs(){
 		touch /tmp/setup-unsquashfs-running
 		echo "unsquashing $SQF_FILE..." > /tmp/unsquashfs.log; \
 		echo >> /tmp/unsquashfs.log; \
-		unsquashfs -f -da 32 -fr 32 -d $UNSQUASH_TARGET /bootmnt/${iso_name}/${arch}/$SQF_FILE >> /tmp/unsquashfs.log 2>&1
+		unsquashfs -f -da 32 -fr 32 -d $UNSQUASH_TARGET ${img_path}/$SQF_FILE >> /tmp/unsquashfs.log 2>&1
 		rm -f /tmp/setup-unsquashfs-running
 	) &
 
@@ -449,7 +449,7 @@ run_unsquashfs(){
 # runs mount on SQF_FILE
 run_mount_sqf(){
 	# mount SQF_FILE to CP_SOURCE
-	mount /bootmnt/${iso_name}/${arch}/${SQF_FILE} ${CP_SOURCE} -t squashfs -o loop
+	mount ${img_path}/${SQF_FILE} ${CP_SOURCE} -t squashfs -o loop
 }
 
 # run_umount_sqf()
@@ -464,7 +464,7 @@ run_umount_sqf(){
 #
 run_cp(){
 	# all cp output goes to /tmp/cp.log, which we tail
-	FILES_TOSYNC=$(unsquashfs -l /bootmnt/${iso_name}/${arch}/${SQF_FILE} | wc -l)
+	FILES_TOSYNC=$(unsquashfs -l ${img_path}/${SQF_FILE} | wc -l)
 	(cp -av ${CP_SOURCE}/* ${CP_TARGET} | \
 	pv -nls ${FILES_TOSYNC} | \
 	grep -v ">" | grep "[0-9]*") 2>&1 | \
@@ -511,7 +511,7 @@ installsystem_unsquash(){
 	#DIALOG --msgbox "${_installationwillstart}" 0 0
 	#clear
 	mkdir -p ${DESTDIR}
-	#unsquashfs -f -d ${DESTDIR} /bootmnt/${iso_name}/${arch}/root-image.sqfs
+	#unsquashfs -f -d ${DESTDIR} ${img_path}/root-image.sqfs
 	UNSQUASH_TARGET=${DESTDIR}
 	SQF_FILE=root-image.sqfs
 	run_unsquashfs
@@ -523,7 +523,7 @@ installsystem_unsquash(){
 	fi
 	sed -i '/dir_scan: failed to open directory [^ ]*, because File exists/d' /tmp/unsquasherror.log
 
-	#unsquashfs -f -d ${DESTDIR} /bootmnt/${iso_name}/${arch}/de-image.sqfs
+	#unsquashfs -f -d ${DESTDIR} ${img_path}/de-image.sqfs
 	UNSQUASH_TARGET=${DESTDIR}
 	SQF_FILE=${DESKTOP_IMG}.sqfs
 	run_unsquashfs
@@ -885,10 +885,10 @@ _post_process(){
 	chroot ${DESTDIR} locale-gen &> /dev/null
 
 	# installing localization packages
-	if [ -e "/bootmnt/${iso_name}/${arch}/lng-image.sqfs" ] ; then
+	if [ -e "${img_path}/lng-image.sqfs" ] ; then
 		configure_translation_pkgs ${DESTDIR}
 		${PACMAN_LNG} -Sy
-		if [ -e "/bootmnt/${iso_name}/${arch}/kde-image.sqfs" ] ; then
+		if [ -e "${img_path}/kde-image.sqfs" ] ; then
 			${PACMAN_LNG} -S ${KDE_LNG_INST} &> /dev/null
 		fi
 		if [ -e "/usr/bin/firefox" ] ; then
