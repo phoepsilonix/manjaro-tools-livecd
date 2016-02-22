@@ -34,7 +34,7 @@ get_layout(){
 }
 
 find_legacy_keymap(){
-	file="opt/live/kbd-model-map"
+	file="/usr/share/manjaro-tools/kbd-model-map"
 	while read -r line || [[ -n $line ]]; do
 		if [[ -z $line ]] || [[ $line == \#* ]]; then
 			continue
