@@ -1,7 +1,7 @@
 #!/bin/sh
 
 [[ -r /usr/lib/manjaro-tools/util.sh ]] && source /usr/lib/manjaro-tools/util.sh
-[[ -r /opt/live/util-live.sh ]] && source /opt/live/util-live.sh
+[[ -r /usr/lib/manjaro-tools/util-live.sh ]] && source /usr/lib/manjaro-tools/util-live.sh
 
 USENONFREE="$(kernel_cmdline nonfree no)"
 VIDEO="$(kernel_cmdline xdriver no)"

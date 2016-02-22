@@ -2,7 +2,7 @@
 
 [[ -r /usr/lib/manjaro-tools/util.sh ]] && source /usr/lib/manjaro-tools/util.sh
 
-load_profile_config "/opt/live/profile.conf"
+load_profile_config "/usr/share/manjaro-tools/profile.conf"
 
 VER=0.9.1
 # Basis settings
@@ -81,7 +81,7 @@ S_PRECONFIG=0   # pre configuration editing
 # main menu selection tracker
 NEXTITEM=""
 
-[[ -r /opt/live/util-live.sh ]] && source /opt/live/util-live.sh
+[[ -r /usr/lib/manjaro-tools/util-live.sh ]] && source /usr/lib/manjaro-tools/util-live.sh
 [[ -r ${LIBDIR}/util-mnt.sh ]] && source ${LIBDIR}/util-mnt.sh
 [[ -r ${LIBDIR}/util-inst.sh ]] && source ${LIBDIR}/util-inst.sh
 

@@ -110,7 +110,7 @@ export LANG=en_US.UTF-8
 export LC_MESSAGES=en_US.UTF-8
 
 # Translation
-[[ -r /opt/live/util-live.sh ]] && source /opt/live/util-live.sh
+[[ -r /usr/lib/manjaro-tools/util-live.sh ]] && source /usr/lib/manjaro-tools/util-live.sh
 
 LOCALE=$(get_country)
 

@@ -3,9 +3,9 @@
 livetimer=$(date +%s%3N)
 [[ -r /usr/lib/manjaro-tools/util.sh ]] && source /usr/lib/manjaro-tools/util.sh
 
-load_profile_config "/opt/live/profile.conf"
+load_profile_config "/usr/share/manjaro-tools/profile.conf"
 
-[[ -r /opt/live/util-live.sh ]] && source /opt/live/util-live.sh
+[[ -r /usr/lib/manjaro-tools/util-live.sh ]] && source /usr/lib/manjaro-tools/util-live.sh
 echo "Loaded scripts: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
 
 livetimer=$(get_timer_ms)
