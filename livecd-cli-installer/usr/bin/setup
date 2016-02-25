@@ -18,8 +18,8 @@ username=''
 
 img_path="/bootmnt/${iso_name}/${arch}"
 
-if [ -e "${img_path}/${custom}-image.sqfs" ] ; then
-	DESKTOP_IMG="${custom}-image"
+if [ -e "${img_path}/${profile}-image.sqfs" ] ; then
+	DESKTOP_IMG="${profile}-image"
 fi
 
 ANSWER="/tmp/.setup"
