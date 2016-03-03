@@ -1,6 +1,4 @@
 manjaro-tools-livecd
 ====================
 
-Cli installer Manjaro
-
-System services for Manjaro's livecd
+System services for Manjaro's live session
