@@ -50,7 +50,7 @@ install_base:
 
 install_rc:
 	install -dm0755 $(DESTDIR)$(SYSCONFDIR)/init.d
-	install -d0755 ${RC} $(DESTDIR)$(SYSCONFDIR)/init.d
+	install -m0755 ${RC} $(DESTDIR)$(SYSCONFDIR)/init.d
 
 install_sd:
 	install -dm0755 $(DESTDIR)$(PREFIX)/lib/systemd/system
