@@ -7,6 +7,16 @@ BIN = \
 	bin/manjaro-live \
 	bin/mhwd-live
 
+XBIN = \
+	bin/desktop-items \
+	bin/disable-dpms \
+	bin/pulseaudio-ctl-normal
+
+XDG = \
+	autostart/live-session.desktop \
+	autostart/disable-dpms.desktop \
+	autostart/pulseaudio-ctl.desktop
+
 LIBS = \
 	lib/util-live.sh
 
@@ -56,6 +66,14 @@ install_sd:
 	install -dm0755 $(DESTDIR)$(PREFIX)/lib/systemd/system
 	install -m0644 ${SD} $(DESTDIR)$(PREFIX)/lib/systemd/system
 
+install_xdg:
+	install -dm0755 $(DESTDIR)$(PREFIX)/bin
+	install -m0755 ${XBIN} $(DESTDIR)$(PREFIX)/bin
+
+	install -dm0755 $(DESTDIR)$(SYSCONFDIR)/skel/.config/autostart
+	install -m0755 ${XDG} $(DESTDIR)$(SYSCONFDIR)/skel/.config/autostart
+
+
 uninstall:
 	for f in ${BIN}; do rm -f $(DESTDIR)$(PREFIX)/bin/$$f; done
 	for f in ${SHARED}; do rm -f $(DESTDIR)$(PREFIX)/share/manjaro-tools/$$f; done
@@ -66,6 +84,10 @@ uninstall_rc:
 
 uninstall_sd:
 	for f in ${SD}; do rm -f $(DESTDIR)$(PREFIX)/lib/systemd/system/$$f; done
+
+uninstall_xdg:
+	for f in ${XBIN}; do rm -f $(DESTDIR)$(PREFIX)/bin/$$f; done
+	for f in ${XDG}; do rm -f $(DESTDIR)$(SYSCONFDIR)/skel/.config/autostart/$$f; done
 
 install: install_base install_rc install_sd
 
