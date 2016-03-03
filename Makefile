@@ -89,9 +89,9 @@ uninstall_xdg:
 	for f in ${XBIN}; do rm -f $(DESTDIR)$(PREFIX)/bin/$$f; done
 	for f in ${XDG}; do rm -f $(DESTDIR)$(SYSCONFDIR)/skel/.config/autostart/$$f; done
 
-install: install_base install_rc install_sd
+install: install_base install_rc install_sd install_xdg
 
-uninstall: uninstall_base uninstall_rc uninstall_sd
+uninstall: uninstall_base uninstall_rc uninstall_sd uninstall_xdg
 
 dist:
 	git archive --format=tar --prefix=manjaro-tools-livecd-$(Version)/ $(Version) | gzip -9 > manjaro-tools-livecd-$(Version).tar.gz
