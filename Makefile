@@ -20,10 +20,8 @@ RC = \
 	init/rc/pacman-init
 
 SD = \
-	init/sd/etc-pacman.d-gnupg.mount \
 	init/sd/manjaro-live.service \
-	init/sd/mhwd-live.service \
-	init/sd/pacman-init.service
+	init/sd/mhwd-live.service
 
 all: $(BIN) $(RC)
 
@@ -52,7 +50,7 @@ install_base:
 
 install_rc:
 	install -dm0755 $(DESTDIR)$(SYSCONFDIR)/init.d
-	install -m0644 ${RC} $(DESTDIR)$(SYSCONFDIR)/init.d
+	install -dm0755 ${RC} $(DESTDIR)$(SYSCONFDIR)/init.d
 
 install_sd:
 	install -dm0755 $(DESTDIR)$(PREFIX)/lib/systemd/system
