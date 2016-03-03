@@ -11,7 +11,7 @@ LIBS = \
 	lib/util-live.sh
 
 SHARED = \
-	kbd-model-map
+	data/kbd-model-map
 
 RC = \
 	init/rc/gnupg-mount \
