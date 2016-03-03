@@ -53,11 +53,11 @@ install_base:
 
 install_rc:
 	install -dm0755 $(DESTDIR)$(SYSCONFDIR)/init.d
-	install -m0644 ${SYSCONF} $(DESTDIR)$(SYSCONFDIR)/init.d
+	install -m0644 ${RC} $(DESTDIR)$(SYSCONFDIR)/init.d
 
 install_sd:
 	install -dm0755 $(DESTDIR)$(SYSCONFDIR)/manjaro-tools
-	install -m0644 ${SYSCONF} $(DESTDIR)$(PREFIX)/lib/systemd/system
+	install -m0644 ${SD} $(DESTDIR)$(PREFIX)/lib/systemd/system
 
 uninstall:
 	for f in ${BIN}; do rm -f $(DESTDIR)$(PREFIX)/bin/$$f; done
