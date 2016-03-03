@@ -39,7 +39,6 @@ edit = sed -e "s|@datadir[@]|$(DESTDIR)$(PREFIX)/share/manjaro-tools|g" \
 
 clean:
 	rm -f $(BIN)
-	rm -rf man
 
 install_base:
 	install -dm0755 $(DESTDIR)$(PREFIX)/bin
