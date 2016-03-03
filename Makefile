@@ -25,7 +25,7 @@ SD = \
 	init/sd/mhwd-live.service \
 	init/sd/pacman-init.service
 
-all: $(BIN)
+all: $(BIN) $(RC)
 
 edit = sed -e "s|@datadir[@]|$(DESTDIR)$(PREFIX)/share/manjaro-tools|g" \
 	-e "s|@libdir[@]|$(DESTDIR)$(PREFIX)/lib/manjaro-tools|g"
@@ -38,7 +38,7 @@ edit = sed -e "s|@datadir[@]|$(DESTDIR)$(PREFIX)/share/manjaro-tools|g" \
 	@chmod +x "$@"
 
 clean:
-	rm -f $(BIN)
+	rm -f $(BIN) $(RC)
 
 install_base:
 	install -dm0755 $(DESTDIR)$(PREFIX)/bin
