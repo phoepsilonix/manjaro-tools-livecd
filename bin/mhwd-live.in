@@ -1,10 +1,13 @@
 #!/bin/sh
 
-[[ -r /usr/lib/manjaro-tools/util.sh ]] && source /usr/lib/manjaro-tools/util.sh
-[[ -r /usr/lib/manjaro-tools/util-live.sh ]] && source /usr/lib/manjaro-tools/util-live.sh
+[[ -r @libdir@/util.sh ]] && source @libdir@/util.sh
+[[ -r @libdir@/util-live.sh ]] && source @libdir@/util-live.sh
 
 USENONFREE="$(kernel_cmdline nonfree no)"
 VIDEO="$(kernel_cmdline xdriver no)"
+
+REPO_PATH='/opt/live'
+[[ -d /opt/livecd ]] && REPO_PATH='/opt/livecd'
 
 # In a live session we should never have a database lock at boot, this is a bug!
 # In the past pamac caused issues about that.
@@ -25,19 +28,19 @@ do
 done
 
 # hwdetect_graphics
-if [[ -e "/opt/live/pacman-gfx.conf" ]]; then
+if [[ -e "${REPO_PATH}/pacman-gfx.conf" ]]; then
    echo "Running MHWD..." >> /var/log/mhwd-live.log
    if  [[ "${USENONFREE}" == "yes" ]] || [[ "${USENONFREE}" == "true" ]]; then
    	if  [[ "${VIDEO}" == "vesa" ]]; then
-		mhwd --install pci video-vesa --pmconfig "/opt/live/pacman-gfx.conf" >> /var/log/mhwd-live.log
+		mhwd --install pci video-vesa --pmconfig "${REPO_PATH}/pacman-gfx.conf" >> /var/log/mhwd-live.log
 	else
-		mhwd --auto pci nonfree 0300 --pmconfig "/opt/live/pacman-gfx.conf" >> /var/log/mhwd-live.log
+		mhwd --auto pci nonfree 0300 --pmconfig "${REPO_PATH}/pacman-gfx.conf" >> /var/log/mhwd-live.log
 	fi
    else
    	if  [[ "${VIDEO}" == "vesa" ]]; then
-		mhwd --install pci video-vesa --pmconfig "/opt/live/pacman-gfx.conf" >> /var/log/mhwd-live.log
+		mhwd --install pci video-vesa --pmconfig "${REPO_PATH}/pacman-gfx.conf" >> /var/log/mhwd-live.log
 	else
-		mhwd --auto pci free 0300 --pmconfig "/opt/live/pacman-gfx.conf" >> /var/log/mhwd-live.log
+		mhwd --auto pci free 0300 --pmconfig "${REPO_PATH}/pacman-gfx.conf" >> /var/log/mhwd-live.log
 	fi
    fi
 fi

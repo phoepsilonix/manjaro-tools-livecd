@@ -1,11 +1,14 @@
 #!/bin/sh
 
+LIBDIR='@libdir@'
+DATADIR='@datadir@'
+
 livetimer=$(date +%s%3N)
-[[ -r /usr/lib/manjaro-tools/util.sh ]] && source /usr/lib/manjaro-tools/util.sh
+[[ -r ${LIBDIR}/util.sh ]] && source ${LIBDIR}/util.sh
 
-load_profile_config "/usr/share/manjaro-tools/profile.conf"
+load_profile_config "${DATADIR}/profile.conf"
 
-[[ -r /usr/lib/manjaro-tools/util-live.sh ]] && source /usr/lib/manjaro-tools/util-live.sh
+[[ -r ${LIBDIR}/util-live.sh ]] && source ${LIBDIR}/util-live.sh
 echo "Loaded scripts: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
 
 livetimer=$(get_timer_ms)
