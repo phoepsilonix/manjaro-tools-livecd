@@ -1,4 +1,4 @@
-Version=16.06-devel
+Version=16.03
 
 PREFIX = /usr/local
 SYSCONFDIR = /etc
@@ -13,9 +13,9 @@ XBIN = \
 	bin/pulseaudio-ctl-normal
 
 XDG = \
-	autostart/live-session.desktop \
-	autostart/disable-dpms.desktop \
-	autostart/pulseaudio-ctl.desktop
+	data/live-session.desktop \
+	data/disable-dpms.desktop \
+	data/pulseaudio-ctl.desktop
 
 LIBS = \
 	lib/util-live.sh
@@ -24,14 +24,14 @@ SHARED = \
 	data/kbd-model-map
 
 RC = \
-	init/rc/gnupg-mount \
-	init/rc/manjaro-live \
-	init/rc/mhwd-live \
-	init/rc/pacman-init
+	data/rc/gnupg-mount \
+	data/rc/manjaro-live \
+	data/rc/mhwd-live \
+	data/rc/pacman-init
 
 SD = \
-	init/sd/manjaro-live.service \
-	init/sd/mhwd-live.service
+	data/sd/manjaro-live.service \
+	data/sd/mhwd-live.service
 
 all: $(BIN) $(RC) $(XBIN)
 
