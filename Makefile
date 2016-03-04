@@ -33,7 +33,7 @@ SD = \
 	init/sd/manjaro-live.service \
 	init/sd/mhwd-live.service
 
-all: $(BIN) $(RC)
+all: $(BIN) $(RC) $(XBIN)
 
 edit = sed -e "s|@datadir[@]|$(DESTDIR)$(PREFIX)/share/manjaro-tools|g" \
 	-e "s|@libdir[@]|$(DESTDIR)$(PREFIX)/lib/manjaro-tools|g"
@@ -46,7 +46,7 @@ edit = sed -e "s|@datadir[@]|$(DESTDIR)$(PREFIX)/share/manjaro-tools|g" \
 	@chmod +x "$@"
 
 clean:
-	rm -f $(BIN) $(RC)
+	rm -f $(BIN) $(RC) $(XBIN)
 
 install_base:
 	install -dm0755 $(DESTDIR)$(PREFIX)/bin
