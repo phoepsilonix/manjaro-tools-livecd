@@ -33,6 +33,15 @@ if [[ -f "$src/hexchat.desktop" ]]; then
 	"$xdg/hexchat.desktop"
 fi
 
+# workaround for glib trash bug (https://bugzilla.gnome.org/show_bug.cgi?id=748248)
+
+userid=$(id -u $USER)
+
+if [ ! -d "/.Trash-$userid" ]; then
+  sudo mkdir -p /.Trash-$userid/{expunged,files,info}
+  sudo chown -R $userid /.Trash-$userid
+fi
+
 # support sonar
 
 if [[ -f "/usr/share/sonar/keyboard_shortcuts.txt" ]]; then
