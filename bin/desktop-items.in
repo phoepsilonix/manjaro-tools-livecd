@@ -54,9 +54,9 @@ fi
 # support sonar
 
 if $(is_sonar); then
-	sed -e "s/^.*Name=.*/Name=Install Sonar Linux (Calamares)/" -i $src/calamares.desktop
-	sed -e "s/^.*Name=.*/Name=Install Sonar Linux/" -i $src/thus.desktop
-	sed -e "s/^.*Name=.*/Name=Install Sonar Linux (cli)/" -i $xdg/cli-installer.desktop
+	[[ -f $src/calamares.desktop ]] && sed -e "s/^.*Name=.*/Name=Install Sonar Linux (Calamares)/" -i $src/calamares.desktop
+	[[ -f $xdg/thus.desktop ]] && sed -e "s/^.*Name=.*/Name=Install Sonar Linux/" -i $src/thus.desktop
+	[[ -f $xdg/cli-installer.desktop ]] && sed -e "s/^.*Name=.*/Name=Install Sonar Linux (cli)/" -i $xdg/cli-installer.desktop
 fi
 
 if [[ -f "/usr/share/sonar/keyboard_shortcuts.txt" ]]; then
