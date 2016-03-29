@@ -3,19 +3,37 @@
 xdg=$(xdg-user-dir DESKTOP)
 src='/usr/share/applications'
 
+is_sonar(){
+	. /etc/os-release
+	if [[ $ID == sonar ]]; then
+		return 0
+	else
+		return 1
+	fi
+}
+
 if [[ -f /usr/bin/thus ]];then
 	install -Dm755 $src/thus.desktop \
 	$xdg/thus.desktop
+	if $(is_sonar); then
+		sed -e "s/^.*Name=.*/Name=Install Sonar Linux/" -i $src/thus.desktop
+	fi
 fi
 
 if [[ -f /usr/bin/calamares ]];then
 	install -Dm755 $src/calamares.desktop \
 	$xdg/calamares.desktop
+	if $(is_sonar); then
+		sed -e "s/^.*Name=.*/Name=Install Sonar Linux (Calamares)/" -i $src/calamares.desktop
+	fi
 fi
 
 if [[ -f /usr/bin/cli-installer ]];then
 	install -Dm755 $src/cli-installer.desktop \
 	$xdg/cli-installer.desktop
+	if $(is_sonar); then
+		sed -e "s/^.*Name=.*/Name=Install Sonar Linux (cli)/" -i $xdg/cli-installer.desktop
+	fi
 fi
 
 if [[ -f "/usr/share/doc/livecd/Beginner_User_Guide.pdf" ]]; then
@@ -33,15 +51,6 @@ if [[ -f "$src/hexchat.desktop" ]]; then
 	"$xdg/hexchat.desktop"
 fi
 
-is_sonar(){
-	. /etc/os-release
-	if [[ $ID == sonar ]]; then
-		return 0
-	else
-		return 1
-	fi
-}
-
 # workaround for glib trash bug (https://bugzilla.gnome.org/show_bug.cgi?id=748248)
 
 userid=$(id -u $USER)
@@ -50,32 +59,3 @@ if [ ! -d "/.Trash-$userid" ]; then
   sudo mkdir -p /.Trash-$userid/{expunged,files,info}
   sudo chown -R $userid /.Trash-$userid
 fi
-
-# support sonar
-
-if $(is_sonar); then
-	[[ -f $src/calamares.desktop ]] && sed -e "s/^.*Name=.*/Name=Install Sonar Linux (Calamares)/" -i $src/calamares.desktop
-	[[ -f $xdg/thus.desktop ]] && sed -e "s/^.*Name=.*/Name=Install Sonar Linux/" -i $src/thus.desktop
-	[[ -f $xdg/cli-installer.desktop ]] && sed -e "s/^.*Name=.*/Name=Install Sonar Linux (cli)/" -i $xdg/cli-installer.desktop
-fi
-
-if [[ -f "/usr/share/sonar/keyboard_shortcuts.txt" ]]; then
-	ln -sf /usr/share/sonar/keyboard_shortcuts.txt \
-	"$xdg/keyboard_shortcuts"
-fi
-
-if [[ -f "/usr/share/sonar/users_guide.odt" ]]; then
-	ln -sf /usr/share/sonar/users_guide.odt \
-	"$xdg/users_guide"
-fi
-
-if [[ -f "$src/ask_for_help_online.desktop" ]]; then
-	install -Dm755 $src/ask_for_help_online.desktop \
-	"$xdg/ask_for_help_online.desktop"
-fi
-
-if [[ -f "$src/connect_to_our_mumble_server_for_help.desktop" ]]; then
-	install -Dm755 $src/connect_to_our_mumble_server_for_help.desktop \
-	"$xdg/connect_to_our_mumble_server_for_help.desktop"
-fi
-
