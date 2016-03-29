@@ -33,6 +33,15 @@ if [[ -f "$src/hexchat.desktop" ]]; then
 	"$xdg/hexchat.desktop"
 fi
 
+is_sonar(){
+	. /etc/os-release
+	if [[ $ID == sonar ]]; then
+		return 0
+	else
+		return 1
+	fi
+}
+
 # workaround for glib trash bug (https://bugzilla.gnome.org/show_bug.cgi?id=748248)
 
 userid=$(id -u $USER)
@@ -43,6 +52,12 @@ if [ ! -d "/.Trash-$userid" ]; then
 fi
 
 # support sonar
+
+if $(is_sonar); then
+	sed -e "s/^.*Name=.*/Name=Install Sonar Linux (Calamares)/" -i $src/calamares.desktop
+	sed -e "s/^.*Name=.*/Name=Install Sonar Linux/" -i $src/thus.desktop
+	sed -e "s/^.*Name=.*/Name=Install Sonar Linux (cli)/" -i $xdg/cli-installer.desktop
+fi
 
 if [[ -f "/usr/share/sonar/keyboard_shortcuts.txt" ]]; then
 	ln -sf /usr/share/sonar/keyboard_shortcuts.txt \
@@ -63,3 +78,4 @@ if [[ -f "$src/connect_to_our_mumble_server_for_help.desktop" ]]; then
 	install -Dm755 $src/connect_to_our_mumble_server_for_help.desktop \
 	"$xdg/connect_to_our_mumble_server_for_help.desktop"
 fi
+
