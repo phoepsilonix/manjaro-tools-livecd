@@ -16,7 +16,7 @@ if [[ -f /usr/bin/thus ]];then
 	install -Dm755 $src/thus.desktop \
 	$xdg/thus.desktop
 	if $(is_sonar); then
-		sed -e "s/^.*Name=.*/Name=Install $NAME/" -i $src/thus.desktop
+		sed -e "s/^.*Name=.*/Name=Install Sonar Linux/" -i $xdg/thus.desktop
 	fi
 fi
 
@@ -24,7 +24,7 @@ if [[ -f /usr/bin/calamares ]];then
 	install -Dm755 $src/calamares.desktop \
 	$xdg/calamares.desktop
 	if $(is_sonar); then
-		sed -e "s/^.*Name=.*/Name=Install $NAME (Calamares)/" -i $src/calamares.desktop
+		sed -e "s/^.*Name=.*/Name=Install Sonar Linux (Calamares)/" -i $xdg/calamares.desktop
 	fi
 fi
 
@@ -32,7 +32,7 @@ if [[ -f /usr/bin/cli-installer ]];then
 	install -Dm755 $src/cli-installer.desktop \
 	$xdg/cli-installer.desktop
 	if $(is_sonar); then
-		sed -e "s/^.*Name=.*/Name=Install $NAME (cli)/" -i $xdg/cli-installer.desktop
+		sed -e "s/^.*Name=.*/Name=Install Sonar Linux (cli)/" -i $xdg/cli-installer.desktop
 	fi
 fi
 
