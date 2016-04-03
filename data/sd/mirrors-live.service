@@ -4,7 +4,7 @@ Before=systemd-user-sessions.service
 
 [Service]
 Type=oneshot
-ExecStart=pacman-mirrors -m random
+ExecStart=/usr/bin/mirrors-live
 
 [Install]
 WantedBy=multi-user.target
