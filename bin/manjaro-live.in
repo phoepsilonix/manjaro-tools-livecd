@@ -58,7 +58,3 @@ configure_alsa /
 # Save settings
 alsactl -f /etc/asound.state store &>/dev/null
 echo "Configured alsa: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
-
-livetimer=$(get_timer_ms)
-pacman-mirrors -m random
-echo "Randomized mirrors list: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log

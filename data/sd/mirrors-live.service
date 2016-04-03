@@ -1,0 +1,10 @@
+[Unit]
+Description=LiveMedia mirrors randomizer script
+Before=systemd-user-sessions.service
+
+[Service]
+Type=oneshot
+ExecStart=pacman-mirrors -m random
+
+[Install]
+WantedBy=multi-user.target

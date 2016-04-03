@@ -1,0 +1,15 @@
+#!/usr/bin/openrc-run
+# Copyright 2016 artoo (artoo@manjaro.org)
+# Distributed under the terms of the GNU General Public License v2
+
+description="Pacman initialization script"
+
+depend() {
+	need net
+}
+
+start() {
+	ebegin "Running mirrors randomizer"
+	pacman-mirrors -m random
+	eend $?
+}
