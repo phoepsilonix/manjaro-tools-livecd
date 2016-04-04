@@ -1,10 +1,10 @@
 [Unit]
-Description=LiveMedia mirrors randomizer script
+Description=LiveMedia Pacman mirrors randomizer script
 Before=systemd-user-sessions.service
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/mirrors-live
+ExecStart=/usr/bin/pacman-mirrors -m random
 
 [Install]
 WantedBy=multi-user.target
