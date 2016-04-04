@@ -5,7 +5,6 @@ SYSCONFDIR = /etc
 
 BIN = \
 	bin/manjaro-live \
-	bin/mirrors-live \
 	bin/mhwd-live
 
 XBIN = \

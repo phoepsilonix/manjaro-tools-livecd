@@ -10,6 +10,6 @@ depend() {
 
 start() {
 	ebegin "Running mirrors randomizer"
-	/usr/bin/mirrors-live
+	/usr/bin/pacman-mirrors -m random
 	eend $?
 }
