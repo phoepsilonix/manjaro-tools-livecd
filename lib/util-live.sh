@@ -360,10 +360,6 @@ configure_sudo(){
 }
 
 configure_env(){
-	echo "BROWSER=/usr/bin/xdg-open" >> /etc/environment
-	echo "BROWSER=/usr/bin/xdg-open" >> /etc/skel/.bashrc
-	echo "BROWSER=/usr/bin/xdg-open" >> /etc/profile
-
 	# add TERM var
 	if [ -e "/usr/bin/mate-session" ] ; then
 		echo "TERM=mate-terminal" >> /etc/environment
