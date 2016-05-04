@@ -1,4 +1,4 @@
-Version=16.03
+Version=16.04
 
 PREFIX = /usr/local
 SYSCONFDIR = /etc
@@ -27,10 +27,12 @@ RC = \
 	data/rc/gnupg-mount \
 	data/rc/manjaro-live \
 	data/rc/mhwd-live \
+	data/rc/mirrors-live \
 	data/rc/pacman-init
 
 SD = \
 	data/sd/manjaro-live.service \
+	data/sd/mirrors-live \
 	data/sd/mhwd-live.service
 
 all: $(BIN) $(RC) $(XBIN)
