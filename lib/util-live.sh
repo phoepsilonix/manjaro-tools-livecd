@@ -360,16 +360,10 @@ configure_sudo(){
 }
 
 configure_env(){
-	# add TERM var
-	if [ -e "/usr/bin/mate-session" ] ; then
-		echo "TERM=mate-terminal" >> /etc/environment
-		echo "TERM=mate-terminal" >> /etc/profile
-	fi
-
 	## FIXME - Workaround to launch mate-terminal
-	if [ -e "/usr/bin/mate-session" ] ; then
-		sed -i -e "s~^.*Exec=.*~Exec=mate-terminal -e 'sudo setup'~" "/etc/skel/Desktop/installer-launcher-cli.desktop"
-		sed -i -e "s~^.*Terminal=.*~Terminal=false~" "/etc/skel/Desktop/installer-launcher-cli.desktop"
+	if [ -e "/usr/bin/mate-terminal" ] ; then
+		sed -i -e "s~^.*Exec=.*~Exec=mate-terminal -e 'sudo setup'~" "/usr/share/applications/cli-installer.desktop"
+		sed -i -e "s~^.*Terminal=.*~Terminal=false~" "/usr/share/applications/cli-installer.desktop"
 	fi
 }
 
