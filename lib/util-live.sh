@@ -369,7 +369,10 @@ configure_env(){
 configure_user_root(){
 	# set up root password
 	echo "root:${password}" | chroot $1 chpasswd
-	cp -a /etc/skel/.{bash_profile,bashrc,bash_logout,extend.bashrc,config} /root/
+	cp /etc/skel/.{bash_profile,bashrc,bash_logout,extend.bashrc} /root/
+	if [[ -d /etc/skel/.config ]];then
+		cp -a /etc/skel/.config /root/
+	fi
 }
 
 configure_displaymanager_autologin(){
