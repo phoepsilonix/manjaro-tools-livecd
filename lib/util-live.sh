@@ -349,12 +349,12 @@ configure_swap(){
 	fi
 }
 
-# TODO: review sudoers
+# TODO: review sudoers: we have a /etc/sudoers.d/wheel file, we could also haveone for root and leave /etc/sudoers untouched
 configure_sudo(){
 	chown root:root /etc/sudoers
-	sed -i -e 's|# %wheel ALL=(ALL) ALL|%wheel ALL=(ALL) ALL|g' /etc/sudoers
+	#sed -i -e 's|# %wheel ALL=(ALL) ALL|%wheel ALL=(ALL) ALL|g' /etc/sudoers
 	sed -e 's|# root ALL=(ALL) ALL|root ALL=(ALL) ALL|' -i /etc/sudoers
-	echo "${username} ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+	#echo "${username} ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 	chmod 440 /etc/sudoers
 }
 
