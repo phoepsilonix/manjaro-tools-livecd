@@ -42,10 +42,6 @@ configure_machine_id
 echo "Configured machine-id: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
 
 livetimer=$(get_timer_ms)
-configure_sudo
-echo "Configured sudoers: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
-
-livetimer=$(get_timer_ms)
 ${autologin} && configure_displaymanager_autologin
 echo "Configured displaymanager autologin: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
 
