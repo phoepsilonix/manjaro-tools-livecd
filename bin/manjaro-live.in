@@ -32,6 +32,8 @@ echo "Ran locale-gen: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-liv
 
 configure_clock
 
+configure_sudoers_d
+
 # Add BROWSER var in env and workaround for mate-terminal
 livetimer=$(get_timer_ms)
 configure_env

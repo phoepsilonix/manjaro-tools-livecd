@@ -342,6 +342,12 @@ configure_machine_id(){
 	ln -sf /etc/machine-id /var/lib/dbus/machine-id
 }
 
+configure_sudoers_d(){
+	echo "%wheel  ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/g_wheel
+	echo "root ALL=(ALL) ALL"  > /etc/sudoers.d/u_root
+	#echo "${username} ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/u_live
+}
+
 configure_swap(){
 	local swapdev="$(fdisk -l 2>/dev/null | grep swap | cut -d' ' -f1)"
 	if [ -e "${swapdev}" ]; then
