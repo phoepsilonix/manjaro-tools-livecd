@@ -33,6 +33,32 @@ get_layout(){
 	echo $(kernel_cmdline layout)
 }
 
+get_timer_ms(){
+	echo $(date +%s%3N)
+}
+
+# $1: start timer
+elapsed_time_ms(){
+	echo $(echo $1 $(get_timer_ms) | awk '{ printf "%0.3f",($2-$1)/1000 }')
+}
+
+load_live_config(){
+
+	[[ -f $1 ]] || return 1
+
+	live_conf="$1"
+
+	[[ -r ${live_conf} ]] && source ${live_conf}
+
+	[[ -z ${autologin} ]] && autologin=true
+
+	[[ -z ${username} ]] && username="manjaro"
+
+	[[ -z ${password} ]] && password="manjaro"
+
+	return 0
+}
+
 find_legacy_keymap(){
 	file="${DATADIR}/kbd-model-map"
 	while read -r line || [[ -n $line ]]; do
