@@ -5,9 +5,10 @@ DATADIR='@datadir@'
 
 livetimer=$(date +%s%3N)
 
+[[ -r ${LIBDIR}/util-live.sh ]] && source ${LIBDIR}/util-live.sh
+
 load_live_config "${DATADIR}/live.conf"
 
-[[ -r ${LIBDIR}/util-live.sh ]] && source ${LIBDIR}/util-live.sh
 echo "Loaded scripts: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
 
 livetimer=$(get_timer_ms)
