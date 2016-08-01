@@ -368,20 +368,17 @@ configure_machine_id(){
 	ln -sf /etc/machine-id /var/lib/dbus/machine-id
 }
 
+configure_sudoers_d(){
+	echo "%wheel  ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/g_wheel
+	echo "root ALL=(ALL) ALL"  > /etc/sudoers.d/u_root
+	#echo "${username} ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/u_live
+}
+
 configure_swap(){
 	local swapdev="$(fdisk -l 2>/dev/null | grep swap | cut -d' ' -f1)"
 	if [ -e "${swapdev}" ]; then
 		swapon ${swapdev}
 	fi
-}
-
-# TODO: review sudoers: we have a /etc/sudoers.d/wheel file, we could also haveone for root and leave /etc/sudoers untouched
-configure_sudo(){
-	chown root:root /etc/sudoers
-	#sed -i -e 's|# %wheel ALL=(ALL) ALL|%wheel ALL=(ALL) ALL|g' /etc/sudoers
-	sed -e 's|# root ALL=(ALL) ALL|root ALL=(ALL) ALL|' -i /etc/sudoers
-	#echo "${username} ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
-	chmod 440 /etc/sudoers
 }
 
 configure_env(){

@@ -31,6 +31,8 @@ echo "Ran locale-gen: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-liv
 
 configure_clock
 
+configure_sudoers_d
+
 # Add BROWSER var in env and workaround for mate-terminal
 livetimer=$(get_timer_ms)
 configure_env
@@ -39,10 +41,6 @@ echo "Configured env: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-liv
 livetimer=$(get_timer_ms)
 configure_machine_id
 echo "Configured machine-id: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
-
-livetimer=$(get_timer_ms)
-configure_sudo
-echo "Configured sudoers: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
 
 livetimer=$(get_timer_ms)
 ${autologin} && configure_displaymanager_autologin
