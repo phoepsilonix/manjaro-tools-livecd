@@ -1,4 +1,4 @@
-Version=16.04
+Version=16.08
 
 PREFIX = /usr/local
 SYSCONFDIR = /etc
