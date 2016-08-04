@@ -21,7 +21,6 @@ LIBS = \
 	lib/util-live.sh
 
 SHARED = \
-	data/desktop.map \
 	data/kbd-model.map
 
 RC = \
