@@ -22,7 +22,7 @@ LIBS = \
 
 SHARED = \
 	data/desktop.map \
-	data/kbd-model-map
+	data/kbd-model.map
 
 RC = \
 	data/rc/gnupg-mount \
