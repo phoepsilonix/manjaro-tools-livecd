@@ -120,7 +120,6 @@ set_sddm_ck(){
 
 configure_displaymanager(){
 	# Try to detect desktop environment
-	detect_desktop_env
 	# Configure display manager
 	if [[ -f /usr/bin/ligthdm ]];then
 		groupadd -r autologin
