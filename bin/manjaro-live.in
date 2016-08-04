@@ -9,7 +9,7 @@ livetimer=$(date +%s%3N)
 
 load_live_config "${DATADIR}/live.conf"
 
-echo "Loaded scripts: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
+echo "Loaded ${DATADIR}/live.conf: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
 
 livetimer=$(get_timer_ms)
 CONSOLEFONT="$(kernel_cmdline vconsole.font)"
@@ -30,13 +30,21 @@ livetimer=$(get_timer_ms)
 locale-gen
 echo "Ran locale-gen: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
 
+livetimer=$(get_timer_ms)
 configure_clock
+echo "Configured cloack: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
 
+livetimer=$(get_timer_ms)
+configure_user
+echo "Created user ${username} with password ${password}: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
+
+livetimer=$(get_timer_ms)
 configure_sudoers_d
+echo "Configured sudoers: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
 
 # Add BROWSER var in env and workaround for mate-terminal
 livetimer=$(get_timer_ms)
-configure_env
+configure_environment
 echo "Configured env: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
 
 livetimer=$(get_timer_ms)
@@ -44,8 +52,12 @@ configure_machine_id
 echo "Configured machine-id: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
 
 livetimer=$(get_timer_ms)
-${autologin} && configure_displaymanager_autologin
-echo "Configured displaymanager autologin: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
+configure_accountsservice "${username}"
+echo "Configured accountsservice: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
+
+livetimer=$(get_timer_ms)
+configure_displaymanager
+echo "Configured displaymanager: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
 
 livetimer=$(get_timer_ms)
 configure_user_root /
@@ -56,6 +68,8 @@ configure_alsa /
 # Save settings
 alsactl -f /etc/asound.state store &>/dev/null
 echo "Configured alsa: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
+
+configure_pamac
 
 livetimer=$(get_timer_ms)
 # load dm-mod

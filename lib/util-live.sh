@@ -10,7 +10,7 @@
 # GNU General Public License for more details.
 
 kernel_cmdline(){
-	for param in $(/bin/cat /proc/cmdline); do
+	for param in $(cat /proc/cmdline); do
 		case "${param}" in
 			$1=*) echo "${param##*=}"; return 0 ;;
 			$1) return 0 ;;
@@ -56,11 +56,173 @@ load_live_config(){
 
 	[[ -z ${password} ]] && password="manjaro"
 
+	[[ -z ${addgroups} ]] && addgroups=""
+
+	[[ -z ${login_shell} ]] && login_shell="/bin/bash"
+
+	[[ -z ${iso_name} ]] && iso_name="manjaro"
+
 	return 0
 }
 
+configure_accountsservice(){
+	local path=/var/lib/AccountsService/users
+	if [ -d "${path}" ] ; then
+		echo "[User]" > ${path}/$1
+		echo "XSession=${default_desktop_file}" >> ${path}/$1
+		if [[ -f "/var/lib/AccountsService/icons/$1.png" ]];then
+			echo "Icon=/var/lib/AccountsService/icons/$1.png" >> ${path}/$1
+		fi
+	fi
+}
+
+load_desktop_map(){
+	local _space="s| ||g" _clean=':a;N;$!ba;s/\n/ /g' _com_rm="s|#.*||g" \
+		file=${DATADIR}/desktop.map
+	local desktop_map=$(sed "$_com_rm" "$file" \
+			| sed "$_space" \
+			| sed "$_clean")
+        echo ${desktop_map}
+}
+
+detect_desktop_env(){
+	local xs=/usr/share/xsessions ex=/usr/bin key val map=( $(load_desktop_map) )
+	default_desktop_file="none"
+	default_desktop_executable="none"
+	for item in "${map[@]}";do
+		key=${item%:*}
+		val=${item#*:}
+		if [[ -f $xs/$key.desktop ]] && [[ -f $ex/$val ]];then
+			default_desktop_file="$key"
+			default_desktop_executable="$val"
+		fi
+	done
+}
+
+
+is_valid_de(){
+	if [[ ${default_desktop_executable} != "none" ]] && \
+	[[ ${default_desktop_file} != "none" ]]; then
+		return 0
+	else
+		return 1
+	fi
+}
+
+set_sddm_ck(){
+        local halt='/usr/bin/shutdown -h -P now' \
+        reboot='/usr/bin/shutdown -r now'
+        sed -e "s|^.*HaltCommand=.*|HaltCommand=${halt}|" \
+            -e "s|^.*RebootCommand=.*|RebootCommand=${reboot}|" \
+            -e "s|^.*MinimumVT=.*|MinimumVT=7|" \
+            -i "/etc/sddm.conf"
+        gpasswd -a sddm video &> /dev/null
+}
+
+ set_lightdm_greeter(){
+	local greeters=$(ls /usr/share/xgreeters/*greeter.desktop) name
+	for g in ${greeters[@]};do
+		name=${g##*/}
+		name=${name%%.*}
+		case ${name} in
+			lightdm-gtk-greeter) break ;;
+			lightdm-*-greeter)
+				sed -i -e "s/^.*greeter-session=.*/greeter-session=${name}/" /etc/lightdm/lightdm.conf
+			;;
+		esac
+	done
+ }
+
+ set_lightdm_ck(){
+	sed -i -e 's/^.*minimum-vt=.*/minimum-vt=7/' /etc/lightdm/lightdm.conf
+	sed -i -e 's/pam_systemd.so/pam_ck_connector.so nox11/' /etc/pam.d/lightdm-greeter
+ }
+
+configure_displaymanager(){
+	# Try to detect desktop environment
+	detect_desktop_env
+	# Configure display manager
+	if [[ -f /usr/bin/ligthdm ]];then
+		groupadd -r autologin
+		[[ -f /usr/bin/openrc ]] && set_lightdm_ck
+		set_lightdm_greeter
+		if $(is_valid_de); then
+			sed -i -e "s/^.*user-session=.*/user-session=$default_desktop_file/" /etc/lightdm/lightdm.conf
+		fi
+		if ${autologin};then
+		gpasswd -a ${username} autologin &> /dev/null
+			sed -i -e "s/^.*autologin-user=.*/autologin-user=${username}/" /etc/lightdm/lightdm.conf
+			sed -i -e "s/^.*autologin-user-timeout=.*/autologin-user-timeout=0/" /etc/lightdm/lightdm.conf
+			sed -i -e "s/^.*pam-autologin-service=.*/pam-autologin-service=lightdm-autologin/" /etc/lightdm/lightdm.conf
+		fi
+	elif [[ -f /usr/bin/ligthdm ]];then
+		configure_accountsservice "gdm"
+		if ${autologin};then
+			sed -i -e "s/\[daemon\]/\[daemon\]\nAutomaticLogin=${username}\nAutomaticLoginEnable=True/" /etc/gdm/custom.conf
+		fi
+	elif [[ -f /usr/bin/mdm ]];then
+		if $(is_valid_de); then
+			sed -i "s|default.desktop|$default_desktop_file.desktop|g" /etc/mdm/custom.conf
+		fi
+	elif [[ -f /usr/bin/sddm ]];then
+		[[ -f /usr/bin/openrc ]] && set_sddm_ck
+		if $(is_valid_de); then
+			sed -i -e "s|^Session=.*|Session=$default_desktop_file.desktop|" /etc/sddm.conf
+		fi
+		if ${autologin};then
+			sed -i -e "s|^User=.*|User=${username}|" /etc/sddm.conf
+		fi
+	elif [[ -f /usr/bin/lxdm ]];then
+		if $(is_valid_de); then
+			sed -i -e "s|^.*session=.*|session=/usr/bin/$default_desktop_executable|" /etc/lxdm/lxdm.conf
+		fi
+		if ${autologin};then
+			sed -i -e "s/^.*autologin=.*/autologin=${username}/" /etc/lxdm/lxdm.conf
+		fi
+	fi
+}
+
+gen_pw(){
+	echo $(perl -e 'print crypt($ARGV[0], "password")' ${password})
+}
+
+configure_user(){
+	# set up user and password
+	if [[ -n ${password} ]];then
+		useradd -m -G ${addgroups} -p $(gen_pw) -s ${login_shell} ${username}
+	else
+		useradd -m -G ${addgroups} -s ${login_shell} ${username}
+	fi
+}
+
+
+configure_environment(){
+	local img_path="/bootmnt/${iso_name}/${arch}"
+
+	cd ${img_path}
+	case $(ls ${img_path}/*-image.sqfs) in
+		cinnamon*|deepin*|gnome|i3|lxde|mate|netbook|openbox|pantheon|xfce*)
+			echo "QT_STYLE_OVERRIDE=gtk" >> /etc/environment
+			if [[ -f "/usr/lib/qt/plugins/platformthemes/libqt5ct.so" ]];then
+				sed -i '/QT_STYLE_OVERRIDE=gtk/d' /etc/environment
+				echo "QT_QPA_PLATFORMTHEME=qt5ct" >> /etc/environment
+			fi
+			if [[ -f "/usr/lib/qt/plugins/styles/libqgtk2style.so" ]];then
+				sed -i '/QT_STYLE_OVERRIDE=gtk/d' /etc/environment
+				echo "QT_STYLE_OVERRIDE=gtk2" >> /etc/environment
+			fi
+		;;
+	esac
+}
+
+configure_pamac() {
+	if [[ -f /etc/NetworkManager/dispatcher.d/99_update_pamac_tray ]];then
+		rm -f /etc/NetworkManager/dispatcher.d/99_update_pamac_tray
+	fi
+}
+
 find_legacy_keymap(){
-	file="${DATADIR}/kbd-model-map"
+	file="${DATADIR}/kbd-model.map"
 	while read -r line || [[ -n $line ]]; do
 		if [[ -z $line ]] || [[ $line == \#* ]]; then
 			continue
@@ -103,9 +265,9 @@ write_x11_config(){
 	fi
 
 	# create X11 keyboard layout config
-	mkdir -p "$1/etc/X11/xorg.conf.d"
+	mkdir -p "/etc/X11/xorg.conf.d"
 
-	local XORGKBLAYOUT="$1/etc/X11/xorg.conf.d/00-keyboard.conf"
+	local XORGKBLAYOUT="/etc/X11/xorg.conf.d/00-keyboard.conf"
 
 	echo "" >> "$XORGKBLAYOUT"
 	echo "Section \"InputClass\"" > "$XORGKBLAYOUT"
@@ -132,17 +294,17 @@ configure_language(){
 
 	local TLANG=${LOCALE%.*}
 
-	sed -i -r "s/#(${TLANG}.*UTF-8)/\1/g" $1/etc/locale.gen
+	sed -i -r "s/#(${TLANG}.*UTF-8)/\1/g" /etc/locale.gen
 
-	echo "LANG=${LOCALE}.UTF-8" >> $1/etc/environment
+	echo "LANG=${LOCALE}.UTF-8" >> /etc/environment
 
-	if [[ -f $1/usr/bin/openrc ]]; then
-		sed -i "s/keymap=.*/keymap=\"${KEYMAP}\"/" $1/etc/conf.d/keymaps
+	if [[ -f /usr/bin/openrc ]]; then
+		sed -i "s/keymap=.*/keymap=\"${KEYMAP}\"/" /etc/conf.d/keymaps
 	fi
-	echo "KEYMAP=${KEYMAP}" > $1/etc/vconsole.conf
-	echo "LANG=${LOCALE}.UTF-8" > $1/etc/locale.conf
+	echo "KEYMAP=${KEYMAP}" > /etc/vconsole.conf
+	echo "LANG=${LOCALE}.UTF-8" > /etc/locale.conf
 
-	write_x11_config $1
+	write_x11_config
 
 	loadkeys "${KEYMAP}"
 }
@@ -152,150 +314,6 @@ configure_clock(){
         ln -sf /usr/share/zoneinfo/Europe/London /etc/localtime
         echo "Europe/London" > /etc/timezone
     fi
-}
-
-configure_translation_pkgs(){
-	# Determind which language we are using
-	local LNG_INST=$(cat $1/etc/locale.conf | grep LANG= | cut -d= -f2 | cut -d. -f1)
-	[ -n "$LNG_INST" ] || LNG_INST="en"
-	case "$LNG_INST" in
-		be_BY)
-			#Belarusian
-			FIREFOX_LNG_INST="firefox-i18n-be"
-			THUNDER_LNG_INST="thunderbird-i18n-be"
-			LIBRE_LNG_INST="libreoffice-be"
-			HUNSPELL_LNG_INST=""
-			KDE_LNG_INST=""
-		;;
-		bg_BG)
-			#Bulgarian
-			FIREFOX_LNG_INST="firefox-i18n-bg"
-			THUNDER_LNG_INST="thunderbird-i18n-bg"
-			LIBRE_LNG_INST="libreoffice-bg"
-			HUNSPELL_LNG_INST=""
-			KDE_LNG_INST="kde-l10n-bg"
-		;;
-		de*)
-			#German
-			FIREFOX_LNG_INST="firefox-i18n-de"
-			THUNDER_LNG_INST="thunderbird-i18n-de"
-			LIBRE_LNG_INST="libreoffice-de"
-			HUNSPELL_LNG_INST="hunspell-de"
-			KDE_LNG_INST="kde-l10n-de"
-		;;
-		en*)
-			#English (disabled libreoffice-en-US)
-			FIREFOX_LNG_INST=""
-			THUNDER_LNG_INST=""
-			LIBRE_LNG_INST=""
-			HUNSPELL_LNG_INST="hunspell-en"
-			KDE_LNG_INST=""
-		;;
-		en_GB)
-			#British English
-			FIREFOX_LNG_INST="firefox-i18n-en-gb"
-			THUNDER_LNG_INST="thunderbird-i18n-en-gb"
-			LIBRE_LNG_INST="libreoffice-en-GB"
-			HUNSPELL_LNG_INST="hunspell-en"
-			KDE_LNG_INST=""
-		;;
-		es*)
-			#Espanol
-			FIREFOX_LNG_INST="firefox-i18n-es-es"
-			THUNDER_LNG_INST="thunderbird-i18n-es-es"
-			LIBRE_LNG_INST="libreoffice-es"
-			HUNSPELL_LNG_INST="hunspell-es"
-			KDE_LNG_INST="kde-l10n-es"
-			;;
-		es_AR)
-			#Espanol (Argentina)
-			FIREFOX_LNG_INST="firefox-i18n-es-ar"
-			THUNDER_LNG_INST="thunderbird-i18n-es-ar"
-			LIBRE_LNG_INST="libreoffice-es"
-			HUNSPELL_LNG_INST="hunspell-es"
-			KDE_LNG_INST="kde-l10n-es"
-		;;
-		fr*)
-			#Francais
-			FIREFOX_LNG_INST="firefox-i18n-fr"
-			THUNDER_LNG_INST="thunderbird-i18n-fr"
-			LIBRE_LNG_INST="libreoffice-fr"
-			HUNSPELL_LNG_INST="hunspell-fr"
-			KDE_LNG_INST="kde-l10n-fr"
-		;;
-		it*)
-			#Italian
-			FIREFOX_LNG_INST="firefox-i18n-it"
-			THUNDER_LNG_INST="thunderbird-i18n-it"
-			LIBRE_LNG_INST="libreoffice-it"
-			HUNSPELL_LNG_INST="hunspell-it"
-			KDE_LNG_INST="kde-l10n-it"
-		;;
-		pl_PL)
-			#Polish
-			FIREFOX_LNG_INST="firefox-i18n-pl"
-			THUNDER_LNG_INST="thunderbird-i18n-pl"
-			LIBRE_LNG_INST="libreoffice-pl"
-			HUNSPELL_LNG_INST="hunspell-pl"
-			KDE_LNG_INST="kde-l10n-pl"
-			;;
-		pt_BR)
-			#Brazilian Portuguese
-			FIREFOX_LNG_INST="firefox-i18n-pt-br"
-			THUNDER_LNG_INST="thunderbird-i18n-pt-br"
-			LIBRE_LNG_INST="libreoffice-pt-BR"
-			HUNSPELL_LNG_INST=""
-			KDE_LNG_INST="kde-l10n-pt_br"
-		;;
-		pt_PT)
-			#Portuguese
-			FIREFOX_LNG_INST="firefox-i18n-pt-pt"
-			THUNDER_LNG_INST="thunderbird-i18n-pt-pt"
-			LIBRE_LNG_INST="libreoffice-pt"
-			HUNSPELL_LNG_INST=""
-			KDE_LNG_INST="kde-l10n-pt"
-		;;
-		ro_RO)
-			#Romanian
-			FIREFOX_LNG_INST="firefox-i18n-ro"
-			THUNDER_LNG_INST="thunderbird-i18n-ro"
-			LIBRE_LNG_INST="libreoffice-ro"
-			HUNSPELL_LNG_INST="hunspell-ro"
-			KDE_LNG_INST="kde-l10n-ro"
-		;;
-		ru*)
-			#Russian
-			FIREFOX_LNG_INST="firefox-i18n-ru"
-			THUNDER_LNG_INST="thunderbird-i18n-ru"
-			LIBRE_LNG_INST="libreoffice-ru"
-			HUNSPELL_LNG_INST=""
-			KDE_LNG_INST="kde-l10n-ru"
-		;;
-		sv*)
-			#Swedish
-			FIREFOX_LNG_INST="firefox-i18n-sv-se"
-			THUNDER_LNG_INST="thunderbird-i18n-sv-se"
-			LIBRE_LNG_INST="libreoffice-sv"
-			HUNSPELL_LNG_INST=""
-			KDE_LNG_INST="kde-l10n-sv"
-		;;
-		tr*)
-			#Turkish
-			FIREFOX_LNG_INST="firefox-i18n-tr"
-			THUNDER_LNG_INST="thunderbird-i18n-tr"
-			LIBRE_LNG_INST="libreoffice-tr"
-			HUNSPELL_LNG_INST=""
-			KDE_LNG_INST="kde-l10n-tr"
-		;;
-		uk_UA)
-			#Ukrainian
-			FIREFOX_LNG_INST="firefox-i18n-uk"
-			THUNDER_LNG_INST="thunderbird-i18n-uk"
-			LIBRE_LNG_INST="libreoffice-uk"
-			HUNSPELL_LNG_INST=""
-			KDE_LNG_INST="kde-l10n-uk"
-		;;
-	esac
 }
 
 configure_alsa(){
@@ -381,34 +399,11 @@ configure_swap(){
 	fi
 }
 
-configure_env(){
-	## FIXME - Workaround to launch mate-terminal
-	if [ -e "/usr/bin/mate-terminal" ] ; then
-		sed -i -e "s~^.*Exec=.*~Exec=mate-terminal -e 'sudo setup'~" "/usr/share/applications/cli-installer.desktop"
-		sed -i -e "s~^.*Terminal=.*~Terminal=false~" "/usr/share/applications/cli-installer.desktop"
-	fi
-}
-
 configure_user_root(){
 	# set up root password
 	echo "root:${password}" | chroot $1 chpasswd
 	cp /etc/skel/.{bash_profile,bashrc,bash_logout,extend.bashrc} /root/
 	if [[ -d /etc/skel/.config ]];then
 		cp -a /etc/skel/.config /root/
-	fi
-}
-
-configure_displaymanager_autologin(){
-	if [[ -f /usr/bin/lightdm ]];then
-		gpasswd -a ${username} autologin &> /dev/null
-		sed -i -e "s/^.*autologin-user=.*/autologin-user=${username}/" /etc/lightdm/lightdm.conf
-		sed -i -e "s/^.*autologin-user-timeout=.*/autologin-user-timeout=0/" /etc/lightdm/lightdm.conf
-		sed -i -e "s/^.*pam-autologin-service=.*/pam-autologin-service=lightdm-autologin/" /etc/lightdm/lightdm.conf
-	elif [[ -f /usr/bin/sddm ]];then
-		sed -i -e "s|^User=.*|User=${username}|" /etc/sddm.conf
-	elif [[ -f /usr/bin/lxdm ]];then
-		sed -i -e "s/^.*autologin=.*/autologin=${username}/" /etc/lxdm/lxdm.conf
-	elif [[ -f /usr/bin/gdm ]];then
-		sed -i -e "s/\[daemon\]/\[daemon\]\nAutomaticLogin=${username}\nAutomaticLoginEnable=True/" /etc/gdm/custom.conf
 	fi
 }
