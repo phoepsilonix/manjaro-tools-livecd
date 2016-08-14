@@ -182,13 +182,13 @@ configure_environment(){
 	case $(ls ${img_path}/*-image.sqfs) in
 		cinnamon*|deepin*|gnome|i3|lxde|mate|netbook|openbox|pantheon|xfce*)
 			echo "QT_STYLE_OVERRIDE=gtk" >> /etc/environment
-			if [[ -f "/usr/lib/qt/plugins/platformthemes/libqt5ct.so" ]];then
-				sed -i '/QT_STYLE_OVERRIDE=gtk/d' /etc/environment
-				echo "QT_QPA_PLATFORMTHEME=qt5ct" >> /etc/environment
-			fi
 			if [[ -f "/usr/lib/qt/plugins/styles/libqgtk2style.so" ]];then
 				sed -i '/QT_STYLE_OVERRIDE=gtk/d' /etc/environment
 				echo "QT_STYLE_OVERRIDE=gtk2" >> /etc/environment
+			fi
+			if [[ -f "/usr/lib/qt/plugins/platformthemes/libqt5ct.so" ]];then
+				sed -i '/QT_STYLE_OVERRIDE=gtk/d' /etc/environment
+				echo "QT_QPA_PLATFORMTHEME=qt5ct" >> /etc/environment
 			fi
 		;;
 	esac
