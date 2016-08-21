@@ -134,7 +134,7 @@ configure_displaymanager(){
 			sed -i -e "s/^.*autologin-user-timeout=.*/autologin-user-timeout=0/" /etc/lightdm/lightdm.conf
 			sed -i -e "s/^.*pam-autologin-service=.*/pam-autologin-service=lightdm-autologin/" /etc/lightdm/lightdm.conf
 		fi
-	elif [[ -f /usr/bin/ligthdm ]];then
+	elif [[ -f /usr/bin/gdm ]];then
 		configure_accountsservice "gdm"
 		if ${autologin};then
 			sed -i -e "s/\[daemon\]/\[daemon\]\nAutomaticLogin=${username}\nAutomaticLoginEnable=True/" /etc/gdm/custom.conf
