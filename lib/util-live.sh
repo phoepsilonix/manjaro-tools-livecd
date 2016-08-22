@@ -131,7 +131,7 @@ set_sddm_ck(){
 configure_displaymanager(){
 	# Try to detect desktop environment
 	# Configure display manager
-	if [[ -f /usr/bin/ligthdm ]];then
+	if [[ -f /usr/bin/lightdm ]];then
 		groupadd -r autologin
 		[[ -f /usr/bin/openrc ]] && set_lightdm_ck
 		set_lightdm_greeter
