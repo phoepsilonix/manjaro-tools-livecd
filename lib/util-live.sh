@@ -184,7 +184,6 @@ configure_user(){
 	fi
 }
 
-
 configure_environment(){
 	local img_path="/bootmnt/${iso_name}/${arch}"
 
@@ -267,7 +266,6 @@ write_x11_config(){
 	echo " Option \"XkbVariant\" \"$X11_VARIANT\"" >> "$XORGKBLAYOUT"
 	echo " Option \"XkbOptions\" \"$X11_OPTIONS\"" >> "$XORGKBLAYOUT"
 	echo "EndSection" >> "$XORGKBLAYOUT"
-
 }
 
 configure_language(){

@@ -3,6 +3,9 @@
 LIBDIR='@libdir@'
 DATADIR='@datadir@'
 
+export LC_MESSAGES=C
+export LANG=C
+
 livetimer=$(date +%s%3N)
 
 [[ -r ${LIBDIR}/util-live.sh ]] && source ${LIBDIR}/util-live.sh
