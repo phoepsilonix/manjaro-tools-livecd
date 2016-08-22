@@ -121,7 +121,7 @@ set_sddm_ck(){
  }
 
  configure_samba(){
-	[[ -f /usr/bin/samba ]];then
+	if [[ -f /usr/bin/samba ]];then
 		local conf=/etc/samba/smb.conf
 		cp /etc/samba/smb.conf.default $conf
 		sed -e "s|^.*workgroup =.*|workgroup = ${smb_workgroup}|" -i $conf
