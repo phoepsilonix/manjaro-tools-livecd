@@ -66,6 +66,8 @@ load_live_config(){
 
 	[[ -z ${default_desktop_file} ]] && default_desktop_file="none"
 
+	[[ -z ${smb_workgroup} ]] && smb_workgroup="Manjaro"
+
 	return 0
 }
 
@@ -118,6 +120,14 @@ set_sddm_ck(){
 	sed -i -e 's/pam_systemd.so/pam_ck_connector.so nox11/' /etc/pam.d/lightdm-greeter
  }
 
+ configure_samba(){
+	[[ -f /usr/bin/samba ]];then
+		local conf=/etc/samba/smb.conf
+		cp /etc/samba/smb.conf.default $conf
+		sed -e "s|^.*workgroup =.*|workgroup = ${smb_workgroup}|" -i $conf
+	fi
+}
+
 configure_displaymanager(){
 	# Try to detect desktop environment
 	# Configure display manager
@@ -129,7 +139,7 @@ configure_displaymanager(){
 			sed -i -e "s/^.*user-session=.*/user-session=$default_desktop_file/" /etc/lightdm/lightdm.conf
 		fi
 		if ${autologin};then
-		gpasswd -a ${username} autologin &> /dev/null
+			gpasswd -a ${username} autologin &> /dev/null
 			sed -i -e "s/^.*autologin-user=.*/autologin-user=${username}/" /etc/lightdm/lightdm.conf
 			sed -i -e "s/^.*autologin-user-timeout=.*/autologin-user-timeout=0/" /etc/lightdm/lightdm.conf
 			sed -i -e "s/^.*pam-autologin-service=.*/pam-autologin-service=lightdm-autologin/" /etc/lightdm/lightdm.conf
