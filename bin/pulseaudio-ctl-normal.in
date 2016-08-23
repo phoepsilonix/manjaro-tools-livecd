@@ -1,5 +1,5 @@
 #!/bin/bash
 
 fi [ -e /usr/bin/pulseaudio-ctl ];then
-	(sleep 15s && /usr/bin/pulseaudio-ctl set 70) &
+	(sleep 10s && /usr/bin/pulseaudio-ctl set 70) &
 fi
