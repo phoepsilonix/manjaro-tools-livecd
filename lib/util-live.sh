@@ -188,8 +188,8 @@ configure_environment(){
 	local img_path="/bootmnt/${iso_name}/${arch}"
 
 	cd ${img_path}
-	case $(ls ${img_path}/*-image.sqfs) in
-		*cinnamon*|*deepin*|*gnome*|*i3*|*lxde*|*mate*|*netbook*|*openbox*|*pantheon*|*xfce*)
+	case $(ls ${img_path}) in
+		cinnamon*|deepin*|gnome*|i3*|lxde*|mate*|netbook*|openbox*|pantheon*|xfce*)
 			echo "QT_STYLE_OVERRIDE=gtk" >> /etc/environment
 			if [[ -f "/usr/lib/qt/plugins/styles/libqgtk2style.so" ]];then
 				sed -i '/QT_STYLE_OVERRIDE=gtk/d' /etc/environment
