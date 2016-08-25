@@ -41,11 +41,6 @@ livetimer=$(get_timer_ms)
 configure_sudoers_d
 echo "Configured sudoers: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
 
-# Add BROWSER var in env and workaround for mate-terminal
-livetimer=$(get_timer_ms)
-configure_environment
-echo "Configured env: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
-
 livetimer=$(get_timer_ms)
 configure_machine_id
 echo "Configured machine-id: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
