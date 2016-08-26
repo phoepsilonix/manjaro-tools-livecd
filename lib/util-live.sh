@@ -82,10 +82,10 @@ is_valid_de(){
 
 configure_accountsservice(){
 	local path=/var/lib/AccountsService/users
-	if [ -d "${path}" ]; then
+	if [ -d "${path}" ] ; then
 		echo "[User]" > ${path}/$1
 		echo "XSession=${default_desktop_file}" >> ${path}/$1
-		if [[ -f "/var/lib/AccountsService/icons/$1.png" ]]; then
+		if [[ -f "/var/lib/AccountsService/icons/$1.png" ]];then
 			echo "Icon=/var/lib/AccountsService/icons/$1.png" >> ${path}/$1
 		fi
 	fi
@@ -121,7 +121,7 @@ set_sddm_ck(){
  }
 
  configure_samba(){
-	if [[ -f /usr/bin/samba ]]; then
+	if [[ -f /usr/bin/samba ]];then
 		local conf=/etc/samba/smb.conf
 		cp /etc/samba/smb.conf.default $conf
 		sed -e "s|^.*workgroup =.*|workgroup = ${smb_workgroup}|" -i $conf
@@ -131,41 +131,41 @@ set_sddm_ck(){
 configure_displaymanager(){
 	# Try to detect desktop environment
 	# Configure display manager
-	if [[ -f /usr/bin/lightdm ]]; then
+	if [[ -f /usr/bin/lightdm ]];then
 		groupadd -r autologin
 		[[ -f /usr/bin/openrc ]] && set_lightdm_ck
 		set_lightdm_greeter
 		if $(is_valid_de); then
 			sed -i -e "s/^.*user-session=.*/user-session=$default_desktop_file/" /etc/lightdm/lightdm.conf
 		fi
-		if ${autologin}; then
+		if ${autologin};then
 			gpasswd -a ${username} autologin &> /dev/null
 			sed -i -e "s/^.*autologin-user=.*/autologin-user=${username}/" /etc/lightdm/lightdm.conf
 			sed -i -e "s/^.*autologin-user-timeout=.*/autologin-user-timeout=0/" /etc/lightdm/lightdm.conf
 			sed -i -e "s/^.*pam-autologin-service=.*/pam-autologin-service=lightdm-autologin/" /etc/lightdm/lightdm.conf
 		fi
-	elif [[ -f /usr/bin/gdm ]]; then
+	elif [[ -f /usr/bin/gdm ]];then
 		configure_accountsservice "gdm"
-		if ${autologin}; then
+		if ${autologin};then
 			sed -i -e "s/\[daemon\]/\[daemon\]\nAutomaticLogin=${username}\nAutomaticLoginEnable=True/" /etc/gdm/custom.conf
 		fi
-	elif [[ -f /usr/bin/mdm ]]; then
+	elif [[ -f /usr/bin/mdm ]];then
 		if $(is_valid_de); then
 			sed -i "s|default.desktop|$default_desktop_file.desktop|g" /etc/mdm/custom.conf
 		fi
-	elif [[ -f /usr/bin/sddm ]]; then
+	elif [[ -f /usr/bin/sddm ]];then
 		[[ -f /usr/bin/openrc ]] && set_sddm_ck
 		if $(is_valid_de); then
 			sed -i -e "s|^Session=.*|Session=$default_desktop_file.desktop|" /etc/sddm.conf
 		fi
-		if ${autologin}; then
+		if ${autologin};then
 			sed -i -e "s|^User=.*|User=${username}|" /etc/sddm.conf
 		fi
-	elif [[ -f /usr/bin/lxdm ]]; then
+	elif [[ -f /usr/bin/lxdm ]];then
 		if $(is_valid_de); then
 			sed -i -e "s|^.*session=.*|session=/usr/bin/$default_desktop_executable|" /etc/lxdm/lxdm.conf
 		fi
-		if ${autologin}; then
+		if ${autologin};then
 			sed -i -e "s/^.*autologin=.*/autologin=${username}/" /etc/lxdm/lxdm.conf
 		fi
 	fi
@@ -177,34 +177,15 @@ gen_pw(){
 
 configure_user(){
 	# set up user and password
-	if [[ -n ${password} ]]; then
+	if [[ -n ${password} ]];then
 		useradd -m -G ${addgroups} -p $(gen_pw) -s ${login_shell} ${username}
 	else
 		useradd -m -G ${addgroups} -s ${login_shell} ${username}
 	fi
 }
 
-configure_environment(){
-	local img_path="/bootmnt/${iso_name}/${arch}"
-
-	cd ${img_path}
-	case $(ls ${img_path}) in
-		cinnamon*|deepin*|gnome*|i3*|lxde*|mate*|netbook*|openbox*|pantheon*|xfce*)
-			echo "QT_STYLE_OVERRIDE=gtk" >> /etc/environment
-			if [[ -f "/usr/lib/qt/plugins/styles/libqgtk2style.so" ]]; then
-				sed -i '/QT_STYLE_OVERRIDE=gtk/d' /etc/environment
-				echo "QT_STYLE_OVERRIDE=gtk2" >> /etc/environment
-			fi
-			if [[ -f "/usr/lib/qt/plugins/platformthemes/libqt5ct.so" ]]; then
-				sed -i '/QT_STYLE_OVERRIDE=gtk/d' /etc/environment
-				echo "QT_QPA_PLATFORMTHEME=qt5ct" >> /etc/environment
-			fi
-		;;
-	esac
-}
-
 configure_pamac() {
-	if [[ -f /etc/NetworkManager/dispatcher.d/99_update_pamac_tray ]]; then
+	if [[ -f /etc/NetworkManager/dispatcher.d/99_update_pamac_tray ]];then
 		rm -f /etc/NetworkManager/dispatcher.d/99_update_pamac_tray
 	fi
 }
@@ -299,14 +280,14 @@ configure_language(){
 }
 
 configure_clock(){
-    if [[ -d /run/openrc ]]; then
+    if [[ -d /run/openrc ]];then
         ln -sf /usr/share/zoneinfo/Europe/London /etc/localtime
         echo "Europe/London" > /etc/timezone
     fi
 }
 
 configure_machine_id(){
-	if [ -e "/etc/machine-id" ]; then
+	if [ -e "/etc/machine-id" ] ; then
 		# delete existing machine-id
 		echo "Deleting existing machine-id ..." >> /var/log/manjaro-live.log
 		rm /etc/machine-id
@@ -334,63 +315,63 @@ configure_user_root(){
 	# set up root password
 	echo "root:${password}" | chroot $1 chpasswd
 	cp /etc/skel/.{bash_profile,bashrc,bash_logout,extend.bashrc} /root/
-	if [[ -d /etc/skel/.config ]]; then
+	if [[ -d /etc/skel/.config ]];then
 		cp -a /etc/skel/.config /root/
 	fi
 }
 
-configure_alsa(){
-	# amixer binary
-	local alsa_amixer="chroot $1 /usr/bin/amixer"
-
-	# enable all known (tm) outputs
-	$alsa_amixer -c 0 sset "Master" 70% unmute &>/dev/null
-	$alsa_amixer -c 0 sset "Front" 70% unmute &>/dev/null
-	$alsa_amixer -c 0 sset "Side" 70% unmute &>/dev/null
-	$alsa_amixer -c 0 sset "Surround" 70% unmute &>/dev/null
-	$alsa_amixer -c 0 sset "Center" 70% unmute &>/dev/null
-	$alsa_amixer -c 0 sset "LFE" 70% unmute &> /dev/null
-	$alsa_amixer -c 0 sset "Headphone" 70% unmute &>/dev/null
-	$alsa_amixer -c 0 sset "Speaker" 70% unmute &>/dev/null
-	$alsa_amixer -c 0 sset "PCM" 70% unmute &>/dev/null
-	$alsa_amixer -c 0 sset "Line" 70% unmute &>/dev/null
-	$alsa_amixer -c 0 sset "External" 70% unmute &>/dev/null
-	$alsa_amixer -c 0 sset "FM" 50% unmute &> /dev/null
-	$alsa_amixer -c 0 sset "Master Mono" 70% unmute &>/dev/null
-	$alsa_amixer -c 0 sset "Master Digital" 70% unmute &>/dev/null
-	$alsa_amixer -c 0 sset "Analog Mix" 70% unmute &> /dev/null
-	$alsa_amixer -c 0 sset "Aux" 70% unmute &> /dev/null
-	$alsa_amixer -c 0 sset "Aux2" 70% unmute &> /dev/null
-	$alsa_amixer -c 0 sset "PCM Center" 70% unmute &> /dev/null
-	$alsa_amixer -c 0 sset "PCM Front" 70% unmute &> /dev/null
-	$alsa_amixer -c 0 sset "PCM LFE" 70% unmute &> /dev/null
-	$alsa_amixer -c 0 sset "PCM Side" 70% unmute &> /dev/null
-	$alsa_amixer -c 0 sset "PCM Surround" 70% unmute &> /dev/null
-	$alsa_amixer -c 0 sset "Playback" 70% unmute &> /dev/null
-	$alsa_amixer -c 0 sset "PCM,1" 70% unmute &> /dev/null
-	$alsa_amixer -c 0 sset "DAC" 70% unmute &> /dev/null
-	$alsa_amixer -c 0 sset "DAC,0" 70% unmute &> /dev/null
-	$alsa_amixer -c 0 sset "DAC,0" -12dB &> /dev/null
-	$alsa_amixer -c 0 sset "DAC,1" 70% unmute &> /dev/null
-	$alsa_amixer -c 0 sset "DAC,1" -12dB &> /dev/null
-	$alsa_amixer -c 0 sset "Synth" 70% unmute &> /dev/null
-	$alsa_amixer -c 0 sset "CD" 70% unmute &> /dev/null
-	$alsa_amixer -c 0 sset "Wave" 70% unmute &> /dev/null
-	$alsa_amixer -c 0 sset "Music" 70% unmute &> /dev/null
-	$alsa_amixer -c 0 sset "AC97" 70% unmute &> /dev/null
-	$alsa_amixer -c 0 sset "Analog Front" 70% unmute &> /dev/null
-	$alsa_amixer -c 0 sset "VIA DXS,0" 70% unmute &> /dev/null
-	$alsa_amixer -c 0 sset "VIA DXS,1" 70% unmute &> /dev/null
-	$alsa_amixer -c 0 sset "VIA DXS,2" 70% unmute &> /dev/null
-	$alsa_amixer -c 0 sset "VIA DXS,3" 70% unmute &> /dev/null
-
-	# set input levels
-	$alsa_amixer -c 0 sset "Mic" 70% mute &>/dev/null
-	$alsa_amixer -c 0 sset "IEC958" 70% mute &>/dev/null
-
-	# special stuff
-	$alsa_amixer -c 0 sset "Master Playback Switch" on &>/dev/null
-	$alsa_amixer -c 0 sset "Master Surround" on &>/dev/null
-	$alsa_amixer -c 0 sset "SB Live Analog/Digital Output Jack" off &>/dev/null
-	$alsa_amixer -c 0 sset "Audigy Analog/Digital Output Jack" off &>/dev/null
-}
+# configure_alsa(){
+# 	# amixer binary
+# 	local alsa_amixer="chroot $1 /usr/bin/amixer"
+#
+# 	# enable all known (tm) outputs
+# 	$alsa_amixer -c 0 sset "Master" 70% unmute &>/dev/null
+# 	$alsa_amixer -c 0 sset "Front" 70% unmute &>/dev/null
+# 	$alsa_amixer -c 0 sset "Side" 70% unmute &>/dev/null
+# 	$alsa_amixer -c 0 sset "Surround" 70% unmute &>/dev/null
+# 	$alsa_amixer -c 0 sset "Center" 70% unmute &>/dev/null
+# 	$alsa_amixer -c 0 sset "LFE" 70% unmute &> /dev/null
+# 	$alsa_amixer -c 0 sset "Headphone" 70% unmute &>/dev/null
+# 	$alsa_amixer -c 0 sset "Speaker" 70% unmute &>/dev/null
+# 	$alsa_amixer -c 0 sset "PCM" 70% unmute &>/dev/null
+# 	$alsa_amixer -c 0 sset "Line" 70% unmute &>/dev/null
+# 	$alsa_amixer -c 0 sset "External" 70% unmute &>/dev/null
+# 	$alsa_amixer -c 0 sset "FM" 50% unmute &> /dev/null
+# 	$alsa_amixer -c 0 sset "Master Mono" 70% unmute &>/dev/null
+# 	$alsa_amixer -c 0 sset "Master Digital" 70% unmute &>/dev/null
+# 	$alsa_amixer -c 0 sset "Analog Mix" 70% unmute &> /dev/null
+# 	$alsa_amixer -c 0 sset "Aux" 70% unmute &> /dev/null
+# 	$alsa_amixer -c 0 sset "Aux2" 70% unmute &> /dev/null
+# 	$alsa_amixer -c 0 sset "PCM Center" 70% unmute &> /dev/null
+# 	$alsa_amixer -c 0 sset "PCM Front" 70% unmute &> /dev/null
+# 	$alsa_amixer -c 0 sset "PCM LFE" 70% unmute &> /dev/null
+# 	$alsa_amixer -c 0 sset "PCM Side" 70% unmute &> /dev/null
+# 	$alsa_amixer -c 0 sset "PCM Surround" 70% unmute &> /dev/null
+# 	$alsa_amixer -c 0 sset "Playback" 70% unmute &> /dev/null
+# 	$alsa_amixer -c 0 sset "PCM,1" 70% unmute &> /dev/null
+# 	$alsa_amixer -c 0 sset "DAC" 70% unmute &> /dev/null
+# 	$alsa_amixer -c 0 sset "DAC,0" 70% unmute &> /dev/null
+# 	$alsa_amixer -c 0 sset "DAC,0" -12dB &> /dev/null
+# 	$alsa_amixer -c 0 sset "DAC,1" 70% unmute &> /dev/null
+# 	$alsa_amixer -c 0 sset "DAC,1" -12dB &> /dev/null
+# 	$alsa_amixer -c 0 sset "Synth" 70% unmute &> /dev/null
+# 	$alsa_amixer -c 0 sset "CD" 70% unmute &> /dev/null
+# 	$alsa_amixer -c 0 sset "Wave" 70% unmute &> /dev/null
+# 	$alsa_amixer -c 0 sset "Music" 70% unmute &> /dev/null
+# 	$alsa_amixer -c 0 sset "AC97" 70% unmute &> /dev/null
+# 	$alsa_amixer -c 0 sset "Analog Front" 70% unmute &> /dev/null
+# 	$alsa_amixer -c 0 sset "VIA DXS,0" 70% unmute &> /dev/null
+# 	$alsa_amixer -c 0 sset "VIA DXS,1" 70% unmute &> /dev/null
+# 	$alsa_amixer -c 0 sset "VIA DXS,2" 70% unmute &> /dev/null
+# 	$alsa_amixer -c 0 sset "VIA DXS,3" 70% unmute &> /dev/null
+#
+# 	# set input levels
+# 	$alsa_amixer -c 0 sset "Mic" 70% mute &>/dev/null
+# 	$alsa_amixer -c 0 sset "IEC958" 70% mute &>/dev/null
+#
+# 	# special stuff
+# 	$alsa_amixer -c 0 sset "Master Playback Switch" on &>/dev/null
+# 	$alsa_amixer -c 0 sset "Master Surround" on &>/dev/null
+# 	$alsa_amixer -c 0 sset "SB Live Analog/Digital Output Jack" off &>/dev/null
+# 	$alsa_amixer -c 0 sset "Audigy Analog/Digital Output Jack" off &>/dev/null
+# }
