@@ -2,6 +2,7 @@
 
 LIBDIR='@libdir@'
 DATADIR='@datadir@'
+SYSCONFDIR='@sysconfdir@'
 
 export LC_MESSAGES=C
 export LANG=C
@@ -10,7 +11,7 @@ livetimer=$(date +%s%3N)
 
 [[ -r ${LIBDIR}/util-live.sh ]] && source ${LIBDIR}/util-live.sh
 
-load_live_config "${DATADIR}/live.conf"
+load_live_config "${SYSCONFDIR}/live.conf" || load_live_config "${DATADIR}/live.conf"
 
 echo "Loaded ${DATADIR}/live.conf: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
 
