@@ -68,6 +68,8 @@ load_live_config(){
 
 	[[ -z ${smb_workgroup} ]] && smb_workgroup="Manjaro"
 
+	echo "Loaded ${live_conf}: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
+
 	return 0
 }
 

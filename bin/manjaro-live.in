@@ -13,8 +13,6 @@ livetimer=$(date +%s%3N)
 
 load_live_config "${SYSCONFDIR}/live.conf" || load_live_config "${DATADIR}/live.conf"
 
-echo "Loaded ${DATADIR}/live.conf: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
-
 livetimer=$(get_timer_ms)
 CONSOLEFONT="$(kernel_cmdline vconsole.font)"
 CONSOLEMAP="$(kernel_cmdline vconsole.font.map)"
