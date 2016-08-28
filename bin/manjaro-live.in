@@ -30,7 +30,7 @@ echo "Languaged configured: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manja
 
 livetimer=$(get_timer_ms)
 configure_clock
-echo "Configured cloack: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
+echo "Configured clock: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
 
 livetimer=$(get_timer_ms)
 configure_user
@@ -55,8 +55,6 @@ echo "Configured displaymanager: $(elapsed_time_ms ${livetimer})ms" >> /var/log/
 livetimer=$(get_timer_ms)
 configure_user_root /
 echo "Configured root user: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
-
-configure_pamac
 
 livetimer=$(get_timer_ms)
 configure_samba

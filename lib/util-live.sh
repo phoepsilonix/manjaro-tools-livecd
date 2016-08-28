@@ -186,12 +186,6 @@ configure_user(){
 	fi
 }
 
-configure_pamac() {
-	if [[ -f /etc/NetworkManager/dispatcher.d/99_update_pamac_tray ]];then
-		rm -f /etc/NetworkManager/dispatcher.d/99_update_pamac_tray
-	fi
-}
-
 find_legacy_keymap(){
 	file="${DATADIR}/kbd-model.map"
 	while read -r line || [[ -n $line ]]; do
