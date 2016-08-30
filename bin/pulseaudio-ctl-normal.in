@@ -1,5 +1,6 @@
 #!/bin/bash
 
-fi [ -e /usr/bin/pulseaudio-ctl ];then
+# Do we need this at all?
+if [ -e /usr/bin/pulseaudio-ctl ];then
 	(sleep 10s && /usr/bin/pulseaudio-ctl set 70) &
 fi

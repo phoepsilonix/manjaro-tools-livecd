@@ -68,6 +68,8 @@ load_live_config(){
 
 	[[ -z ${smb_workgroup} ]] && smb_workgroup="Manjaro"
 
+	echo "Loaded ${live_conf}: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
+
 	return 0
 }
 
@@ -181,12 +183,6 @@ configure_user(){
 		useradd -m -G ${addgroups} -p $(gen_pw) -s ${login_shell} ${username}
 	else
 		useradd -m -G ${addgroups} -s ${login_shell} ${username}
-	fi
-}
-
-configure_pamac() {
-	if [[ -f /etc/NetworkManager/dispatcher.d/99_update_pamac_tray ]];then
-		rm -f /etc/NetworkManager/dispatcher.d/99_update_pamac_tray
 	fi
 }
 

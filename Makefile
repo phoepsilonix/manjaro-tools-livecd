@@ -21,7 +21,8 @@ LIBS = \
 	lib/util-live.sh
 
 SHARED = \
-	data/kbd-model.map
+	data/kbd-model.map \
+	data/live.conf
 
 RC = \
 	data/rc/gnupg-mount \
@@ -38,6 +39,7 @@ SD = \
 all: $(BIN) $(RC) $(XBIN)
 
 edit = sed -e "s|@datadir[@]|$(DESTDIR)$(PREFIX)/share/manjaro-tools|g" \
+	-e "s|@sysconfdir[@]|$(DESTDIR)$(SYSCONFDIR)/manjaro-tools|g" \
 	-e "s|@libdir[@]|$(DESTDIR)$(PREFIX)/lib/manjaro-tools|g"
 
 %: %.in Makefile
