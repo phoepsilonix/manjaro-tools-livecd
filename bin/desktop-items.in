@@ -36,9 +36,9 @@ if [[ -f /usr/bin/cli-installer ]];then
 	fi
 fi
 
-if [[ -f "/usr/share/doc/livecd/Beginner_User_Guide.pdf" ]]; then
-	ln -sf /usr/share/doc/livecd/Beginner_User_Guide.pdf \
-	"$xdg/Beginner User Guide.pdf"
+if [[ -f "$src/manjaro-documentation.desktop" ]]; then
+	install -Dm755 $src/manjaro-documentation.desktop \
+	"$xdg/manjaro-documentation.desktop"
 fi
 
 if [[ -f "$src/manjaro-welcome.desktop" ]]; then
