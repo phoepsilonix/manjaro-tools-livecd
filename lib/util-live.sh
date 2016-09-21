@@ -310,7 +310,8 @@ configure_swap(){
 configure_user_root(){
 	# set up root password
 	echo "root:${password}" | chroot $1 chpasswd
-	cp /etc/skel/.{bash_profile,bashrc,bash_logout,extend.bashrc,gtkrc-2.0} /root/
+	cp /etc/skel/.{bash_profile,bashrc,bash_logout} /root/
+	[[ -f /etc/skel/.extend.bashrc ]] && cp /etc/skel/.extend.bashrc /root/
 	if [[ -d /etc/skel/.config ]];then
 		cp -a /etc/skel/.config /root/
 	fi
