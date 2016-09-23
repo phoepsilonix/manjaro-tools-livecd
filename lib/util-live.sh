@@ -317,6 +317,12 @@ configure_user_root(){
 	fi
 }
 
+configure_pulse(){
+    if [[ -f /usr/bin/openrc ]]; then
+        sed -e "s|autospawn = no|autospawn = yes|" -i /etc/pulse/client.conf
+    fi
+}
+
 # configure_alsa(){
 # 	# amixer binary
 # 	local alsa_amixer="chroot $1 /usr/bin/amixer"
