@@ -312,7 +312,8 @@ configure_user_root(){
 	echo "root:${password}" | chroot $1 chpasswd
 	cp /etc/skel/.{bash_profile,bashrc,bash_logout} /root/
 	[[ -f /etc/skel/.extend.bashrc ]] && cp /etc/skel/.extend.bashrc /root/
-	if [[ -d /etc/skel/.config ]];then
+	[[ -f /etc/skel/.gtkrc-2.0 ]] && cp /etc/skel/.gtkrc-2.0 /root/
+	if [[ -d /etc/skel/.config ]]; then
 		cp -a /etc/skel/.config /root/
 	fi
 }
