@@ -1,6 +1,7 @@
 [Unit]
 Description=LiveMedia Pacman mirrors randomizer script
-Before=systemd-user-sessions.service
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 Type=oneshot
