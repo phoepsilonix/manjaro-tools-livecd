@@ -14,6 +14,10 @@ livetimer=$(date +%s%3N)
 load_live_config "${SYSCONFDIR}/live.conf" || load_live_config "${DATADIR}/live.conf"
 
 livetimer=$(get_timer_ms)
+detect_desktop_env
+echo "Detected desktop environment: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
+
+livetimer=$(get_timer_ms)
 CONSOLEFONT="$(kernel_cmdline vconsole.font)"
 CONSOLEMAP="$(kernel_cmdline vconsole.font.map)"
 arch=$(uname -m)

@@ -22,6 +22,7 @@ LIBS = \
 
 SHARED = \
 	data/kbd-model.map \
+	data/desktop.map \
 	data/live.conf
 
 RC = \

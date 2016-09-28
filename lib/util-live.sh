@@ -62,10 +62,6 @@ load_live_config(){
 
 	[[ -z ${iso_name} ]] && iso_name="manjaro"
 
-	[[ -z ${default_desktop_executable} ]] && default_desktop_executable="none"
-
-	[[ -z ${default_desktop_file} ]] && default_desktop_file="none"
-
 	[[ -z ${smb_workgroup} ]] && smb_workgroup="Manjaro"
 
 	echo "Loaded ${live_conf}: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
@@ -80,6 +76,29 @@ is_valid_de(){
 	else
 		return 1
 	fi
+}
+
+load_desktop_map(){
+    local _space="s| ||g" _clean=':a;N;$!ba;s/\n/ /g' _com_rm="s|#.*||g" \
+        file=${DATADIR}/desktop.map
+    local desktop_map=$(sed "$_com_rm" "$file" \
+            | sed "$_space" \
+            | sed "$_clean")
+    echo ${desktop_map}
+}
+
+detect_desktop_env(){
+    local xs=/usr/share/xsessions ex=/usr/bin key val map=( $(load_desktop_map) )
+    default_desktop_file="none"
+    default_desktop_executable="none"
+    for item in "${map[@]}";do
+        key=${item%:*}
+        val=${item#*:}
+        if [[ -f $xs/$key.desktop ]] && [[ -f $ex/$val ]];then
+            default_desktop_file="$key"
+            default_desktop_executable="$val"
+        fi
+    done
 }
 
 configure_accountsservice(){
