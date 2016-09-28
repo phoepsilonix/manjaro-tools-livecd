@@ -60,8 +60,6 @@ load_live_config(){
 
 	[[ -z ${login_shell} ]] && login_shell="/bin/bash"
 
-	[[ -z ${iso_name} ]] && iso_name="manjaro"
-
 	[[ -z ${smb_workgroup} ]] && smb_workgroup="Manjaro"
 
 	echo "Loaded ${live_conf}: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
@@ -342,59 +340,3 @@ configure_pulse(){
         sed -e "s|autospawn = no|autospawn = yes|" -i /etc/pulse/client.conf
     fi
 }
-
-# configure_alsa(){
-# 	# amixer binary
-# 	local alsa_amixer="chroot $1 /usr/bin/amixer"
-#
-# 	# enable all known (tm) outputs
-# 	$alsa_amixer -c 0 sset "Master" 70% unmute &>/dev/null
-# 	$alsa_amixer -c 0 sset "Front" 70% unmute &>/dev/null
-# 	$alsa_amixer -c 0 sset "Side" 70% unmute &>/dev/null
-# 	$alsa_amixer -c 0 sset "Surround" 70% unmute &>/dev/null
-# 	$alsa_amixer -c 0 sset "Center" 70% unmute &>/dev/null
-# 	$alsa_amixer -c 0 sset "LFE" 70% unmute &> /dev/null
-# 	$alsa_amixer -c 0 sset "Headphone" 70% unmute &>/dev/null
-# 	$alsa_amixer -c 0 sset "Speaker" 70% unmute &>/dev/null
-# 	$alsa_amixer -c 0 sset "PCM" 70% unmute &>/dev/null
-# 	$alsa_amixer -c 0 sset "Line" 70% unmute &>/dev/null
-# 	$alsa_amixer -c 0 sset "External" 70% unmute &>/dev/null
-# 	$alsa_amixer -c 0 sset "FM" 50% unmute &> /dev/null
-# 	$alsa_amixer -c 0 sset "Master Mono" 70% unmute &>/dev/null
-# 	$alsa_amixer -c 0 sset "Master Digital" 70% unmute &>/dev/null
-# 	$alsa_amixer -c 0 sset "Analog Mix" 70% unmute &> /dev/null
-# 	$alsa_amixer -c 0 sset "Aux" 70% unmute &> /dev/null
-# 	$alsa_amixer -c 0 sset "Aux2" 70% unmute &> /dev/null
-# 	$alsa_amixer -c 0 sset "PCM Center" 70% unmute &> /dev/null
-# 	$alsa_amixer -c 0 sset "PCM Front" 70% unmute &> /dev/null
-# 	$alsa_amixer -c 0 sset "PCM LFE" 70% unmute &> /dev/null
-# 	$alsa_amixer -c 0 sset "PCM Side" 70% unmute &> /dev/null
-# 	$alsa_amixer -c 0 sset "PCM Surround" 70% unmute &> /dev/null
-# 	$alsa_amixer -c 0 sset "Playback" 70% unmute &> /dev/null
-# 	$alsa_amixer -c 0 sset "PCM,1" 70% unmute &> /dev/null
-# 	$alsa_amixer -c 0 sset "DAC" 70% unmute &> /dev/null
-# 	$alsa_amixer -c 0 sset "DAC,0" 70% unmute &> /dev/null
-# 	$alsa_amixer -c 0 sset "DAC,0" -12dB &> /dev/null
-# 	$alsa_amixer -c 0 sset "DAC,1" 70% unmute &> /dev/null
-# 	$alsa_amixer -c 0 sset "DAC,1" -12dB &> /dev/null
-# 	$alsa_amixer -c 0 sset "Synth" 70% unmute &> /dev/null
-# 	$alsa_amixer -c 0 sset "CD" 70% unmute &> /dev/null
-# 	$alsa_amixer -c 0 sset "Wave" 70% unmute &> /dev/null
-# 	$alsa_amixer -c 0 sset "Music" 70% unmute &> /dev/null
-# 	$alsa_amixer -c 0 sset "AC97" 70% unmute &> /dev/null
-# 	$alsa_amixer -c 0 sset "Analog Front" 70% unmute &> /dev/null
-# 	$alsa_amixer -c 0 sset "VIA DXS,0" 70% unmute &> /dev/null
-# 	$alsa_amixer -c 0 sset "VIA DXS,1" 70% unmute &> /dev/null
-# 	$alsa_amixer -c 0 sset "VIA DXS,2" 70% unmute &> /dev/null
-# 	$alsa_amixer -c 0 sset "VIA DXS,3" 70% unmute &> /dev/null
-#
-# 	# set input levels
-# 	$alsa_amixer -c 0 sset "Mic" 70% mute &>/dev/null
-# 	$alsa_amixer -c 0 sset "IEC958" 70% mute &>/dev/null
-#
-# 	# special stuff
-# 	$alsa_amixer -c 0 sset "Master Playback Switch" on &>/dev/null
-# 	$alsa_amixer -c 0 sset "Master Surround" on &>/dev/null
-# 	$alsa_amixer -c 0 sset "SB Live Analog/Digital Output Jack" off &>/dev/null
-# 	$alsa_amixer -c 0 sset "Audigy Analog/Digital Output Jack" off &>/dev/null
-# }
