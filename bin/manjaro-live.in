@@ -15,7 +15,7 @@ load_live_config "${SYSCONFDIR}/live.conf" || load_live_config "${DATADIR}/live.
 
 livetimer=$(get_timer_ms)
 detect_desktop_env
-echo "Detected desktop environment: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
+echo "Detected ${default_desktop_executable} ${default_desktop_file}: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
 
 livetimer=$(get_timer_ms)
 CONSOLEFONT="$(kernel_cmdline vconsole.font)"
