@@ -37,14 +37,17 @@ done
 
 # hwdetect_graphics
 if [[ -e "${PAC_CONF}" ]]; then
+   MODULES_DIR=/etc/calamares/modules
    echo "Running MHWD..." >> /var/log/mhwd-live.log
    if  [[ "${USENONFREE}" == "yes" ]] || [[ "${USENONFREE}" == "true" ]]; then
+   	sed -e "s|^.*driver:.*|driver: nonfree|" -i "${MODULES_DIR}/mhwdcfg.conf"
    	if  [[ "${VIDEO}" == "vesa" ]]; then
 		mhwd --install pci video-vesa --pmconfig "${PAC_CONF}" >> /var/log/mhwd-live.log
 	else
 		mhwd --auto pci nonfree 0300 --pmconfig "${PAC_CONF}" >> /var/log/mhwd-live.log
 	fi
    else
+   	sed -e "s|^.*driver:.*|driver: free|" -i "${MODULES_DIR}/mhwdcfg.conf"
    	if  [[ "${VIDEO}" == "vesa" ]]; then
 		mhwd --install pci video-vesa --pmconfig "${PAC_CONF}" >> /var/log/mhwd-live.log
 	else
