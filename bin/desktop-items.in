@@ -12,6 +12,14 @@ is_sonar(){
 	fi
 }
 
+if [[ -f /usr/bin/thus ]];then
+	install -Dm755 $src/thus.desktop \
+	$xdg/thus.desktop
+	if $(is_sonar); then
+		sed -e "s/^.*Name=.*/Name=Install Sonar Linux/" -i $xdg/thus.desktop
+	fi
+fi
+
 if [[ -f /usr/bin/calamares ]];then
 	install -Dm755 $src/calamares.desktop \
 	$xdg/calamares.desktop
