@@ -1,0 +1,10 @@
+[Unit]
+Description=LiveMedia Pacman mirrors ranking script
+Before=systemd-user-sessions.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/pacman-mirrors -m rank --geoip
+
+[Install]
+WantedBy=multi-user.target

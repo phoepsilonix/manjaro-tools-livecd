@@ -30,12 +30,14 @@ RC = \
 	data/rc/manjaro-live \
 	data/rc/mhwd-live \
 	data/rc/mirrors-live \
+	data/rc/mirrors-live-net \
 	data/rc/pacman-init
 
 SD = \
 	data/sd/manjaro-live.service \
 	data/sd/mirrors-live.service \
-	data/sd/mhwd-live.service
+	data/sd/mhwd-live.service \
+	data/sd/mhwd-live-net.service
 
 all: $(BIN) $(RC) $(XBIN)
 
