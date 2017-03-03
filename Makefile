@@ -37,7 +37,7 @@ SD = \
 	data/sd/manjaro-live.service \
 	data/sd/mirrors-live.service \
 	data/sd/mhwd-live.service \
-	data/sd/mhwd-live-net.service
+	data/sd/mirrors-live-net.service
 
 all: $(BIN) $(RC) $(XBIN)
 
