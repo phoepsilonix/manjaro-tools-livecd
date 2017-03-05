@@ -4,7 +4,7 @@ Before=systemd-user-sessions.service
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/pacman-mirrors -m rank --geoip
+ExecStart=/usr/bin/pacman-mirrors -m rank -t 30 --geoip
 
 [Install]
 WantedBy=multi-user.target
