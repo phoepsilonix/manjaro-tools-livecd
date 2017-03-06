@@ -1,6 +1,7 @@
 [Unit]
 Description=LiveMedia Pacman mirrors ranking script
-Before=systemd-user-sessions.service
+Wants=network-online.target
+After=network-online.target
 
 [Service]
 Type=oneshot
