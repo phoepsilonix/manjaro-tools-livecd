@@ -1,0 +1,10 @@
+[Unit]
+Description=LiveMedia MHWD net Script
+Before=systemd-user-sessions.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/mhwd-live-net
+
+[Install]
+WantedBy=multi-user.target

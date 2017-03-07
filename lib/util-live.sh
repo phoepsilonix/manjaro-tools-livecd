@@ -152,7 +152,7 @@ configure_displaymanager(){
 	# Configure display manager
 	if [[ -f /usr/bin/lightdm ]];then
 		groupadd -r autologin
-		[[ -f /usr/bin/openrc ]] && set_lightdm_ck
+		[[ -d /run/openrc ]] && set_lightdm_ck
 		set_lightdm_greeter
 		if $(is_valid_de); then
 			sed -i -e "s/^.*user-session=.*/user-session=$default_desktop_file/" /etc/lightdm/lightdm.conf
@@ -173,7 +173,7 @@ configure_displaymanager(){
 			sed -i "s|default.desktop|$default_desktop_file.desktop|g" /etc/mdm/custom.conf
 		fi
 	elif [[ -f /usr/bin/sddm ]];then
-		[[ -f /usr/bin/openrc ]] && set_sddm_ck
+		[[ -d /run/openrc ]] && set_sddm_ck
 		if $(is_valid_de); then
 			sed -i -e "s|^Session=.*|Session=$default_desktop_file.desktop|" /etc/sddm.conf
 		fi
@@ -279,7 +279,7 @@ configure_language(){
 
 	echo "LANG=${LOCALE}.UTF-8" >> /etc/environment
 
-	if [[ -f /usr/bin/openrc ]]; then
+	if [[ -d /run/openrc ]]; then
 		sed -i "s/keymap=.*/keymap=\"${KEYMAP}\"/" /etc/conf.d/keymaps
 	fi
 	echo "KEYMAP=${KEYMAP}" > /etc/vconsole.conf
@@ -336,7 +336,7 @@ configure_user_root(){
 }
 
 configure_pulse(){
-    if [[ -f /usr/bin/openrc ]]; then
+    if [[ -d /run/openrc ]]; then
         sed -e "s|autospawn = no|autospawn = yes|" -i /etc/pulse/client.conf
     fi
 }
