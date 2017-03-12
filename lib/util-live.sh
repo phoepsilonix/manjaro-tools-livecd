@@ -110,14 +110,8 @@ configure_accountsservice(){
 	fi
 }
 
-set_sddm_ck(){
-        local halt='/usr/bin/shutdown -h -P now' \
-        reboot='/usr/bin/shutdown -r now'
-        sed -e "s|^.*HaltCommand=.*|HaltCommand=${halt}|" \
-            -e "s|^.*RebootCommand=.*|RebootCommand=${reboot}|" \
-            -e "s|^.*MinimumVT=.*|MinimumVT=7|" \
-            -i "/etc/sddm.conf"
-        gpasswd -a sddm video &> /dev/null
+set_sddm_elogind(){
+    gpasswd -a sddm video &> /dev/null
 }
 
  set_lightdm_greeter(){
@@ -134,9 +128,9 @@ set_sddm_ck(){
 	done
  }
 
- set_lightdm_ck(){
+ set_lightdm_elogind(){
 	sed -i -e 's/^.*minimum-vt=.*/minimum-vt=7/' /etc/lightdm/lightdm.conf
-	sed -i -e 's/pam_systemd.so/pam_ck_connector.so nox11/' /etc/pam.d/lightdm-greeter
+	sed -i -e 's/pam_systemd.so/pam_elogind.so/' /etc/pam.d/lightdm-greeter
  }
 
  configure_samba(){
@@ -152,7 +146,7 @@ configure_displaymanager(){
 	# Configure display manager
 	if [[ -f /usr/bin/lightdm ]];then
 		groupadd -r autologin
-		[[ -d /run/openrc ]] && set_lightdm_ck
+		[[ -d /run/openrc ]] && set_lightdm_elogind
 		set_lightdm_greeter
 		if $(is_valid_de); then
 			sed -i -e "s/^.*user-session=.*/user-session=$default_desktop_file/" /etc/lightdm/lightdm.conf
@@ -173,7 +167,7 @@ configure_displaymanager(){
 			sed -i "s|default.desktop|$default_desktop_file.desktop|g" /etc/mdm/custom.conf
 		fi
 	elif [[ -f /usr/bin/sddm ]];then
-		[[ -d /run/openrc ]] && set_sddm_ck
+		[[ -d /run/openrc ]] && set_sddm_elogind
 		if $(is_valid_de); then
 			sed -i -e "s|^Session=.*|Session=$default_desktop_file.desktop|" /etc/sddm.conf
 		fi
