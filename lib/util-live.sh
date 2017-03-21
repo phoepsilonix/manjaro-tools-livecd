@@ -110,10 +110,6 @@ configure_accountsservice(){
 	fi
 }
 
-set_sddm_elogind(){
-    gpasswd -a sddm video &> /dev/null
-}
-
  set_lightdm_greeter(){
 	local greeters=$(ls /usr/share/xgreeters/*greeter.desktop) name
 	for g in ${greeters[@]};do
@@ -128,10 +124,19 @@ set_sddm_elogind(){
 	done
  }
 
- set_lightdm_elogind(){
+ set_lightdm_vt(){
 	sed -i -e 's/^.*minimum-vt=.*/minimum-vt=7/' /etc/lightdm/lightdm.conf
-	sed -i -e 's/pam_systemd.so/pam_elogind.so/' /etc/pam.d/lightdm-greeter
  }
+
+# set_sddm_elogind(){
+#     gpasswd -a sddm video &> /dev/null
+# }
+
+set_pam(){
+    for conf in /etc/pam.d/*;do
+        sed -e 's|systemd.so|elogind.so|g' -i $conf
+    done
+}
 
  configure_samba(){
 	if [[ -f /usr/bin/samba ]];then
@@ -146,7 +151,7 @@ configure_displaymanager(){
 	# Configure display manager
 	if [[ -f /usr/bin/lightdm ]];then
 		groupadd -r autologin
-		[[ -d /run/openrc ]] && set_lightdm_elogind
+		[[ -d /run/openrc ]] && set_lightdm_vt
 		set_lightdm_greeter
 		if $(is_valid_de); then
 			sed -i -e "s/^.*user-session=.*/user-session=$default_desktop_file/" /etc/lightdm/lightdm.conf
@@ -167,7 +172,6 @@ configure_displaymanager(){
 			sed -i "s|default.desktop|$default_desktop_file.desktop|g" /etc/mdm/custom.conf
 		fi
 	elif [[ -f /usr/bin/sddm ]];then
-		[[ -d /run/openrc ]] && set_sddm_elogind
 		if $(is_valid_de); then
 			sed -i -e "s|^Session=.*|Session=$default_desktop_file.desktop|" /etc/sddm.conf
 		fi
@@ -182,6 +186,7 @@ configure_displaymanager(){
 			sed -i -e "s/^.*autologin=.*/autologin=${username}/" /etc/lxdm/lxdm.conf
 		fi
 	fi
+	[[ -d /run/openrc ]] && set_pam
 }
 
 gen_pw(){
