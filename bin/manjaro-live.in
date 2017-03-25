@@ -33,10 +33,6 @@ configure_language
 echo "Languaged configured: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
 
 livetimer=$(get_timer_ms)
-configure_clock
-echo "Configured clock: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
-
-livetimer=$(get_timer_ms)
 configure_user
 echo "Created user ${username} with password ${password}: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
 

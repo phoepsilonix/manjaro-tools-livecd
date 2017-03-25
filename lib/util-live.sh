@@ -21,16 +21,16 @@ kernel_cmdline(){
 	return 1
 }
 
-get_country(){
+get_lang(){
 	echo $(kernel_cmdline lang)
 }
 
-get_keyboard(){
+get_keytable(){
 	echo $(kernel_cmdline keytable)
 }
 
-get_layout(){
-	echo $(kernel_cmdline layout)
+get_tz(){
+	echo $(kernel_cmdline tz)
 }
 
 get_timer_ms(){
@@ -263,39 +263,30 @@ write_x11_config(){
 
 configure_language(){
 	# hack to be able to set the locale on bootup
-	local LOCALE=$(get_country)
-	local KEYMAP=$(get_keyboard)
-	local KBLAYOUT=$(get_layout)
+	local lang=$(get_lang)
+	local keytable=$(get_keytable)
+	local timezone=$(get_tz)
 
 	# this is needed for efi, it doesn't set any cmdline
-	[[ -z "$LOCALE" ]] && LOCALE="en_US"
-	[[ -z "$KEYMAP" ]] && KEYMAP="us"
-	[[ -z "$KBLAYOUT" ]] && KBLAYOUT="us"
+	[[ -z "${lang}" ]] && lang="en_US"
+	[[ -z "${keytable}" ]] && keytable="us"
 
-	local TLANG=${LOCALE%.*}
+	sed -e "s/#${lang}.UTF-8/${lang}.UTF-8/" -i /etc/locale.gen
 
-	sed -i -r "s/#(${TLANG}.*UTF-8)/\1/g" /etc/locale.gen
-
-	echo "LANG=${LOCALE}.UTF-8" >> /etc/environment
+# 	echo "LANG=${lang}.UTF-8" >> /etc/environment
 
 	if [[ -d /run/openrc ]]; then
-		sed -i "s/keymap=.*/keymap=\"${KEYMAP}\"/" /etc/conf.d/keymaps
+		sed -i "s/keymap=.*/keymap=\"${keytable}\"/" /etc/conf.d/keymaps
+		echo "${timezone}" > /etc/timezone
 	fi
-	echo "KEYMAP=${KEYMAP}" > /etc/vconsole.conf
-	echo "LANG=${LOCALE}.UTF-8" > /etc/locale.conf
+	echo "KEYMAP=${keytable}" > /etc/vconsole.conf
+	echo "LANG=${lang}.UTF-8" > /etc/locale.conf
 
 	write_x11_config
 
-	loadkeys "${KEYMAP}"
+	loadkeys "${keytable}"
 
-	locale-gen ${TLANG}
-}
-
-configure_clock(){
-    if [[ -d /run/openrc ]];then
-        ln -sf /usr/share/zoneinfo/Europe/London /etc/localtime
-        echo "Europe/London" > /etc/timezone
-    fi
+	locale-gen ${lang}
 }
 
 configure_machine_id(){
