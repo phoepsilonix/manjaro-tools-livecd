@@ -138,12 +138,10 @@ set_pam(){
     done
 }
 
- configure_samba(){
-	if [[ -f /usr/bin/samba ]];then
-		local conf=/etc/samba/smb.conf
-		cp /etc/samba/smb.conf.default $conf
-		sed -e "s|^.*workgroup =.*|workgroup = ${smb_workgroup}|" -i $conf
-	fi
+configure_samba(){
+    local conf=/etc/samba/smb.conf
+    cp /etc/samba/smb.conf.default $conf
+    sed -e "s|^.*workgroup =.*|workgroup = ${smb_workgroup}|" -i $conf
 }
 
 configure_displaymanager(){
@@ -262,33 +260,33 @@ write_x11_config(){
 }
 
 configure_language(){
-	# hack to be able to set the locale on bootup
-	local lang=$(get_lang)
-	local keytable=$(get_keytable)
-	local timezone=$(get_tz)
+    # hack to be able to set the locale on bootup
+    local lang=$(get_lang)
+    local keytable=$(get_keytable)
+    local timezone=$(get_tz)
+    # Fallback
+    #[[ -z "${lang}" ]] && lang="en_US"
+    #[[ -z "${keytable}" ]] && keytable="us"
+    #[[ -z "${timezone}" ]] && timezone="Europe/London"
 
-	# this is needed for efi, it doesn't set any cmdline
-	[[ -z "${lang}" ]] && lang="en_US"
-	[[ -z "${keytable}" ]] && keytable="us"
+    sed -e "s/#${lang}.UTF-8/${lang}.UTF-8/" -i /etc/locale.gen
 
-	sed -e "s/#${lang}.UTF-8/${lang}.UTF-8/" -i /etc/locale.gen
+    # 	echo "LANG=${lang}.UTF-8" >> /etc/environment
 
-# 	echo "LANG=${lang}.UTF-8" >> /etc/environment
-    
-	if [[ -d /run/openrc ]]; then
-		sed -i "s/keymap=.*/keymap=\"${keytable}\"/" /etc/conf.d/keymaps
-		ln -sf /usr/share/zoneinfo/${timezone} /etc/timezone
+    if [[ -d /run/openrc ]]; then
+        sed -i "s/keymap=.*/keymap=\"${keytable}\"/" /etc/conf.d/keymaps
+        ln -sf /usr/share/zoneinfo/${timezone} /etc/timezone
     else
         ln -sf /usr/share/zoneinfo/${timezone} /etc/localtime
-	fi
-	echo "KEYMAP=${keytable}" > /etc/vconsole.conf
-	echo "LANG=${lang}.UTF-8" > /etc/locale.conf
+    fi
+    echo "KEYMAP=${keytable}" > /etc/vconsole.conf
+    echo "LANG=${lang}.UTF-8" > /etc/locale.conf
 
-	write_x11_config
+    write_x11_config
 
-	loadkeys "${keytable}"
+    loadkeys "${keytable}"
 
-	locale-gen ${lang}
+    locale-gen ${lang}
 }
 
 configure_machine_id(){
