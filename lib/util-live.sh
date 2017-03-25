@@ -274,10 +274,12 @@ configure_language(){
 	sed -e "s/#${lang}.UTF-8/${lang}.UTF-8/" -i /etc/locale.gen
 
 # 	echo "LANG=${lang}.UTF-8" >> /etc/environment
-
+    
 	if [[ -d /run/openrc ]]; then
 		sed -i "s/keymap=.*/keymap=\"${keytable}\"/" /etc/conf.d/keymaps
-		echo "${timezone}" > /etc/timezone
+		ln -sf /usr/share/zoneinfo/${timezone} /etc/timezone
+    else
+        ln -sf /usr/share/zoneinfo/${timezone} /etc/localtime
 	fi
 	echo "KEYMAP=${keytable}" > /etc/vconsole.conf
 	echo "LANG=${lang}.UTF-8" > /etc/locale.conf
