@@ -30,9 +30,6 @@ echo "Activated swap and added to fstab: $(elapsed_time_ms ${livetimer})ms" >> /
 
 livetimer=$(get_timer_ms)
 configure_language
-echo "Configured language: ${lang}" >> /var/log/manjaro-live.log
-echo "Configured keymap: ${keytable}" >> /var/log/manjaro-live.log
-echo "Configured timezone: ${timezone}" >> /var/log/manjaro-live.log
 echo "Finished localization: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
 
 livetimer=$(get_timer_ms)
@@ -65,10 +62,10 @@ if [[ -f /usr/bin/samba ]];then
     echo "Configured samba: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
 fi
 
-livetimer=$(get_timer_ms)
-# load dm-mod
-modprobe dm-mod
-echo "Load dm-mod: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
+# livetimer=$(get_timer_ms)
+# # load dm-mod
+# modprobe dm-mod
+# echo "Load dm-mod: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
 
 livetimer=$(get_timer_ms)
 configure_pulse
