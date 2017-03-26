@@ -240,7 +240,7 @@ write_x11_config(){
 
 	# layout not found, use KBLAYOUT
 	if [[ -z "$X11_LAYOUT" ]]; then
-		X11_LAYOUT="$KBLAYOUT"
+		X11_LAYOUT="${keytable}"
 	fi
 
 	# create X11 keyboard layout config
@@ -262,7 +262,7 @@ write_x11_config(){
 configure_language(){
     # hack to be able to set the locale on bootup
     local lang=$(get_lang)
-    local keytable=$(get_keytable)
+    keytable=$(get_keytable)
     local timezone=$(get_tz)
     # Fallback
     #[[ -z "${lang}" ]] && lang="en_US"
@@ -287,6 +287,9 @@ configure_language(){
     loadkeys "${keytable}"
 
     locale-gen ${lang}
+    echo "Configured language: ${lang}" >> /var/log/manjaro-live.log
+    echo "Configured keymap: ${keytable}" >> /var/log/manjaro-live.log
+    echo "Configured timezone: ${timezone}" >> /var/log/manjaro-live.log
 }
 
 configure_machine_id(){
