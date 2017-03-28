@@ -2,7 +2,7 @@
 
 [[ -r @libdir@/util-live.sh ]] && source @libdir@/util-live.sh
 
-USENONFREE="$(kernel_cmdline nonfree no)"
+DRIVER="$(kernel_cmdline driver nonfree)"
 VIDEO="$(kernel_cmdline xdriver no)"
 
 REPO_PATH='/opt'
@@ -39,7 +39,7 @@ done
 if [[ -e "${PAC_CONF}" ]]; then
    MODULES_DIR='/etc/calamares/modules'
    echo "Running MHWD..." >> /var/log/mhwd-live.log
-   if  [[ "${USENONFREE}" == "yes" ]] || [[ "${USENONFREE}" == "true" ]]; then
+   if  [[ "${DRIVER}" == "nonfree" ]]; then
    	sed -e "s|^.*driver:.*|driver: nonfree|" -i "${MODULES_DIR}/mhwdcfg.conf"
    	if  [[ "${VIDEO}" == "vesa" ]]; then
 		mhwd --install pci video-vesa --pmconfig "${PAC_CONF}" >> /var/log/mhwd-live.log
