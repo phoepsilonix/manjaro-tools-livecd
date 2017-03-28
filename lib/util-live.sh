@@ -107,6 +107,9 @@ configure_accountsservice(){
 		if [[ -f "/var/lib/AccountsService/icons/$1.png" ]];then
 			echo "Icon=/var/lib/AccountsService/icons/$1.png" >> ${path}/$1
 		fi
+        if [[ -f /usr/bin/lightdm-deepin-greeter ]]; then
+            echo "GreeterBackground=file:///usr/share/backgrounds/deepin/greeter.jpg" >> ${path}/$1
+        fi
 	fi
 }
 
