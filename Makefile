@@ -5,7 +5,8 @@ SYSCONFDIR = /etc
 
 BIN = \
 	bin/manjaro-live \
-	bin/mhwd-live
+	bin/mhwd-live \
+	bin/mhwd-live-net
 
 XBIN = \
 	bin/desktop-items \
@@ -29,13 +30,17 @@ RC = \
 	data/rc/gnupg-mount \
 	data/rc/manjaro-live \
 	data/rc/mhwd-live \
+	data/rc/mhwd-live-net \
 	data/rc/mirrors-live \
+	data/rc/mirrors-live-net \
 	data/rc/pacman-init
 
 SD = \
 	data/sd/manjaro-live.service \
 	data/sd/mirrors-live.service \
-	data/sd/mhwd-live.service
+	data/sd/mhwd-live.service \
+	data/sd/mhwd-live-net.service \
+	data/sd/mirrors-live-net.service
 
 all: $(BIN) $(RC) $(XBIN)
 

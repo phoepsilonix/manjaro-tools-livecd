@@ -21,16 +21,16 @@ kernel_cmdline(){
 	return 1
 }
 
-get_country(){
+get_lang(){
 	echo $(kernel_cmdline lang)
 }
 
-get_keyboard(){
+get_keytable(){
 	echo $(kernel_cmdline keytable)
 }
 
-get_layout(){
-	echo $(kernel_cmdline layout)
+get_tz(){
+	echo $(kernel_cmdline tz)
 }
 
 get_timer_ms(){
@@ -113,16 +113,6 @@ configure_accountsservice(){
 	fi
 }
 
-set_sddm_ck(){
-        local halt='/usr/bin/shutdown -h -P now' \
-        reboot='/usr/bin/shutdown -r now'
-        sed -e "s|^.*HaltCommand=.*|HaltCommand=${halt}|" \
-            -e "s|^.*RebootCommand=.*|RebootCommand=${reboot}|" \
-            -e "s|^.*MinimumVT=.*|MinimumVT=7|" \
-            -i "/etc/sddm.conf"
-        gpasswd -a sddm video &> /dev/null
-}
-
  set_lightdm_greeter(){
 	local greeters=$(ls /usr/share/xgreeters/*greeter.desktop) name
 	for g in ${greeters[@]};do
@@ -137,17 +127,24 @@ set_sddm_ck(){
 	done
  }
 
- set_lightdm_ck(){
+ set_lightdm_vt(){
 	sed -i -e 's/^.*minimum-vt=.*/minimum-vt=7/' /etc/lightdm/lightdm.conf
-	sed -i -e 's/pam_systemd.so/pam_ck_connector.so nox11/' /etc/pam.d/lightdm-greeter
  }
 
- configure_samba(){
-	if [[ -f /usr/bin/samba ]];then
-		local conf=/etc/samba/smb.conf
-		cp /etc/samba/smb.conf.default $conf
-		sed -e "s|^.*workgroup =.*|workgroup = ${smb_workgroup}|" -i $conf
-	fi
+# set_sddm_elogind(){
+#     gpasswd -a sddm video &> /dev/null
+# }
+
+set_pam(){
+    for conf in /etc/pam.d/*;do
+        sed -e 's|systemd.so|elogind.so|g' -i $conf
+    done
+}
+
+configure_samba(){
+    local conf=/etc/samba/smb.conf
+    cp /etc/samba/smb.conf.default $conf
+    sed -e "s|^.*workgroup =.*|workgroup = ${smb_workgroup}|" -i $conf
 }
 
 configure_displaymanager(){
@@ -155,7 +152,7 @@ configure_displaymanager(){
 	# Configure display manager
 	if [[ -f /usr/bin/lightdm ]];then
 		groupadd -r autologin
-		[[ -f /usr/bin/openrc ]] && set_lightdm_ck
+		[[ -d /run/openrc ]] && set_lightdm_vt
 		set_lightdm_greeter
 		if $(is_valid_de); then
 			sed -i -e "s/^.*user-session=.*/user-session=$default_desktop_file/" /etc/lightdm/lightdm.conf
@@ -176,7 +173,6 @@ configure_displaymanager(){
 			sed -i "s|default.desktop|$default_desktop_file.desktop|g" /etc/mdm/custom.conf
 		fi
 	elif [[ -f /usr/bin/sddm ]];then
-		[[ -f /usr/bin/openrc ]] && set_sddm_ck
 		if $(is_valid_de); then
 			sed -i -e "s|^Session=.*|Session=$default_desktop_file.desktop|" /etc/sddm.conf
 		fi
@@ -191,6 +187,7 @@ configure_displaymanager(){
 			sed -i -e "s/^.*autologin=.*/autologin=${username}/" /etc/lxdm/lxdm.conf
 		fi
 	fi
+	[[ -d /run/openrc ]] && set_pam
 }
 
 gen_pw(){
@@ -246,7 +243,7 @@ write_x11_config(){
 
 	# layout not found, use KBLAYOUT
 	if [[ -z "$X11_LAYOUT" ]]; then
-		X11_LAYOUT="$KBLAYOUT"
+		X11_LAYOUT="${keytable}"
 	fi
 
 	# create X11 keyboard layout config
@@ -266,40 +263,36 @@ write_x11_config(){
 }
 
 configure_language(){
-	# hack to be able to set the locale on bootup
-	local LOCALE=$(get_country)
-	local KEYMAP=$(get_keyboard)
-	local KBLAYOUT=$(get_layout)
+    # hack to be able to set the locale on bootup
+    local lang=$(get_lang)
+    keytable=$(get_keytable)
+    local timezone=$(get_tz)
+    # Fallback
+    #[[ -z "${lang}" ]] && lang="en_US"
+    #[[ -z "${keytable}" ]] && keytable="us"
+    #[[ -z "${timezone}" ]] && timezone="Europe/London"
 
-	# this is needed for efi, it doesn't set any cmdline
-	[[ -z "$LOCALE" ]] && LOCALE="en_US"
-	[[ -z "$KEYMAP" ]] && KEYMAP="us"
-	[[ -z "$KBLAYOUT" ]] && KBLAYOUT="us"
+    sed -e "s/#${lang}.UTF-8/${lang}.UTF-8/" -i /etc/locale.gen
 
-	local TLANG=${LOCALE%.*}
+    # 	echo "LANG=${lang}.UTF-8" >> /etc/environment
 
-	sed -i -r "s/#(${TLANG}.*UTF-8)/\1/g" /etc/locale.gen
-
-	echo "LANG=${LOCALE}.UTF-8" >> /etc/environment
-
-	if [[ -f /usr/bin/openrc ]]; then
-		sed -i "s/keymap=.*/keymap=\"${KEYMAP}\"/" /etc/conf.d/keymaps
-	fi
-	echo "KEYMAP=${KEYMAP}" > /etc/vconsole.conf
-	echo "LANG=${LOCALE}.UTF-8" > /etc/locale.conf
-
-	write_x11_config
-
-	loadkeys "${KEYMAP}"
-
-	locale-gen ${TLANG}
-}
-
-configure_clock(){
-    if [[ -d /run/openrc ]];then
-        ln -sf /usr/share/zoneinfo/Europe/London /etc/localtime
-        echo "Europe/London" > /etc/timezone
+    if [[ -d /run/openrc ]]; then
+        sed -i "s/keymap=.*/keymap=\"${keytable}\"/" /etc/conf.d/keymaps
+        ln -sf /usr/share/zoneinfo/${timezone} /etc/timezone
+    else
+        ln -sf /usr/share/zoneinfo/${timezone} /etc/localtime
     fi
+    echo "KEYMAP=${keytable}" > /etc/vconsole.conf
+    echo "LANG=${lang}.UTF-8" > /etc/locale.conf
+
+    write_x11_config
+
+    loadkeys "${keytable}"
+
+    locale-gen ${lang}
+    echo "Configured language: ${lang}" >> /var/log/manjaro-live.log
+    echo "Configured keymap: ${keytable}" >> /var/log/manjaro-live.log
+    echo "Configured timezone: ${timezone}" >> /var/log/manjaro-live.log
 }
 
 configure_machine_id(){
@@ -339,7 +332,7 @@ configure_user_root(){
 }
 
 configure_pulse(){
-    if [[ -f /usr/bin/openrc ]]; then
+    if [[ -d /run/openrc ]]; then
         sed -e "s|autospawn = no|autospawn = yes|" -i /etc/pulse/client.conf
     fi
 }

@@ -1,0 +1,15 @@
+#!/usr/bin/openrc-run
+# Copyright 2016 artoo (artoo@manjaro.org)
+# Distributed under the terms of the GNU General Public License v2
+
+description="Pacman mirrors ranking"
+
+depend() {
+	need net
+}
+
+start() {
+	ebegin "Running mirrors ranking"
+	/usr/bin/pacman-mirrors -m rank --geoip
+	eend $?
+}

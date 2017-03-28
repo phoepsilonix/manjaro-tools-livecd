@@ -1,0 +1,15 @@
+#!/bin/sh
+
+[[ -r @libdir@/util-live.sh ]] && source @libdir@/util-live.sh
+
+USENONFREE="$(kernel_cmdline nonfree no)"
+
+MODULES_DIR='/etc/calamares/modules'
+echo "Setting MHWD nonfree driver: ${USENONFREE} ..." >> /var/log/mhwd-live.log
+if  [[ "${USENONFREE}" == "yes" ]] || [[ "${USENONFREE}" == "true" ]]; then
+    sed -e "s|^.*driver:.*|driver: nonfree|" -i "${MODULES_DIR}/mhwdcfg.conf"
+else
+    sed -e "s|^.*driver:.*|driver: free|" -i "${MODULES_DIR}/mhwdcfg.conf"
+fi
+
+echo "MHWD DONE" >> /var/log/mhwd-live.log

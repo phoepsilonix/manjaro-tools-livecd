@@ -1,0 +1,16 @@
+#!/usr/bin/openrc-run
+# Copyright 2014 Aaditya Bagga (aaditya_gnulinux@zoho.com)
+# Distributed under the terms of the GNU General Public License v2
+
+depend() {
+    need manjaro-live
+    before xdm
+    after pacman-init
+}
+
+start() {
+	ebegin "Running mhwd-live script"
+	# run the mhwd script
+	/usr/bin/mhwd-live-net &> /dev/null
+	eend $?
+}
