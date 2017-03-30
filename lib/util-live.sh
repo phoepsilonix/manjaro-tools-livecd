@@ -201,7 +201,7 @@ configure_user(){
 }
 
 find_legacy_keymap(){
-	file="${DATADIR}/kbd-model.map"
+	local file="${DATADIR}/kbd-model.map"
 	while read -r line || [[ -n $line ]]; do
 		if [[ -z $line ]] || [[ $line == \#* ]]; then
 			continue
@@ -212,7 +212,7 @@ find_legacy_keymap(){
 			continue
 		fi
 
-		if  [[ "$KEYMAP" != "${mapping[0]}" ]]; then
+		if  [[ "${keytable}" != "${mapping[0]}" ]]; then
 			continue
 		fi
 
@@ -265,9 +265,9 @@ configure_language(){
     keytable=$(get_keytable)
     local timezone=$(get_tz)
     # Fallback
-    [[ -z "${lang}" ]] && lang="en_US"
-    [[ -z "${keytable}" ]] && keytable="us"
-    [[ -z "${timezone}" ]] && timezone="Etc/UTC"
+#     [[ -z "${lang}" ]] && lang="en_US"
+#     [[ -z "${keytable}" ]] && keytable="us"
+#     [[ -z "${timezone}" ]] && timezone="Etc/UTC"
 
     sed -e "s/#${lang}.UTF-8/${lang}.UTF-8/" -i /etc/locale.gen
 
@@ -326,10 +326,4 @@ configure_user_root(){
 	if [[ -d /etc/skel/.config ]]; then
 		cp -a /etc/skel/.config /root/
 	fi
-}
-
-configure_pulse(){
-    if [[ -d /run/openrc ]]; then
-        sed -e "s|autospawn = no|autospawn = yes|" -i /etc/pulse/client.conf
-    fi
 }
