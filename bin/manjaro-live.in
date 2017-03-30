@@ -61,17 +61,3 @@ if [[ -f /usr/bin/samba ]];then
     configure_samba
     echo "Configured samba: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
 fi
-
-# livetimer=$(get_timer_ms)
-# # load dm-mod
-# modprobe dm-mod
-# echo "Load dm-mod: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
-
-livetimer=$(get_timer_ms)
-configure_pulse
-echo "Configured pulse: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
-
-# livetimer=$(get_timer_ms)
-# configure_alsa /
-# alsactl -f /etc/asound.state store &>/dev/null
-# echo "Configured alsa: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
