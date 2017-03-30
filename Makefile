@@ -1,46 +1,26 @@
-Version=16.08
+Version=17.0
 
 PREFIX = /usr/local
 SYSCONFDIR = /etc
 
-BIN = \
-	bin/manjaro-live \
-	bin/mhwd-live \
-	bin/mhwd-live-net
+BIN = $(wildcard bin/*live*)
 
 XBIN = \
 	bin/desktop-items \
 	bin/disable-dpms \
 	bin/pulseaudio-ctl-normal
 
-XDG = \
-	data/live-session.desktop \
-	data/disable-dpms.desktop \
-	data/pulseaudio-ctl.desktop
+XDG = $(wildcard data/*.desktop)
 
-LIBS = \
-	lib/util-live.sh
+LIBS = $(wildcard lib/*.sh)
 
 SHARED = \
-	data/kbd-model.map \
-	data/desktop.map \
+	$(wildcard data/*.map) \
 	data/live.conf
 
-RC = \
-	data/rc/gnupg-mount \
-	data/rc/manjaro-live \
-	data/rc/mhwd-live \
-	data/rc/mhwd-live-net \
-	data/rc/mirrors-live \
-	data/rc/mirrors-live-net \
-	data/rc/pacman-init
+RC = $(wildcard data/rc/*)
 
-SD = \
-	data/sd/manjaro-live.service \
-	data/sd/mirrors-live.service \
-	data/sd/mhwd-live.service \
-	data/sd/mhwd-live-net.service \
-	data/sd/mirrors-live-net.service
+SD = $(wildcard data/sd/*)
 
 all: $(BIN) $(RC) $(XBIN)
 
