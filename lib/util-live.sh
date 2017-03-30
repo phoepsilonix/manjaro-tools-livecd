@@ -265,9 +265,9 @@ configure_language(){
     keytable=$(get_keytable)
     local timezone=$(get_tz)
     # Fallback
-    #[[ -z "${lang}" ]] && lang="en_US"
-    #[[ -z "${keytable}" ]] && keytable="us"
-    #[[ -z "${timezone}" ]] && timezone="Europe/London"
+    [[ -z "${lang}" ]] && lang="en_US"
+    [[ -z "${keytable}" ]] && keytable="us"
+    [[ -z "${timezone}" ]] && timezone="Etc/UTC"
 
     sed -e "s/#${lang}.UTF-8/${lang}.UTF-8/" -i /etc/locale.gen
 
