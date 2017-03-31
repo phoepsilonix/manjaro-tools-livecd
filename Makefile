@@ -21,7 +21,14 @@ SHARED = \
 	$(wildcard data/*.map) \
 	data/live.conf
 
-RC = $(wildcard data/rc/*)
+RC = \
+	data/rc/gnupg-mount \
+	data/rc/mhwd-live-net \
+	data/rc/mirrors-live-net \
+	data/rc/pacman-init \
+	data/rc/manjaro-live \
+	data/rc/mhwd-live \
+	data/rc/mirrors-live
 
 SD = $(wildcard data/sd/*)
 
