@@ -3,7 +3,10 @@ Version=17.0
 PREFIX = /usr/local
 SYSCONFDIR = /etc
 
-BIN = $(wildcard bin/*live*)
+BIN = \
+	bin/manjaro-live \
+	bin/mhwd-live \
+	bin/mhwd-live-net
 
 XBIN = \
 	bin/desktop-items \
