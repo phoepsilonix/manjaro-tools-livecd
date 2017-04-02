@@ -32,7 +32,13 @@ RC = \
 
 SD = $(wildcard data/sd/*)
 
-all: $(BIN) $(RC) $(XBIN)
+GRUB_DEFAULT = \
+	data/grub2-portable-efi
+
+GRUB_D = \
+	data/99_zzz-portable-efi
+
+all: $(BIN) $(RC) $(XBIN) ${GRUB_D}
 
 edit = sed -e "s|@datadir[@]|$(DESTDIR)$(PREFIX)/share/manjaro-tools|g" \
 	-e "s|@sysconfdir[@]|$(DESTDIR)$(SYSCONFDIR)/manjaro-tools|g" \
@@ -46,7 +52,7 @@ edit = sed -e "s|@datadir[@]|$(DESTDIR)$(PREFIX)/share/manjaro-tools|g" \
 	@chmod +x "$@"
 
 clean:
-	rm -f $(BIN) $(RC) $(XBIN)
+	rm -f $(BIN) $(RC) $(XBIN) ${GRUB_D}
 
 install_base:
 	install -dm0755 $(DESTDIR)$(PREFIX)/bin
@@ -73,11 +79,21 @@ install_xdg:
 	install -dm0755 $(DESTDIR)$(SYSCONFDIR)/skel/.config/autostart
 	install -m0755 ${XDG} $(DESTDIR)$(SYSCONFDIR)/skel/.config/autostart
 
+install_portable_efi:
+	install -dm755 $(DESTDIR)$(SYSCONFDIR)/default
+	install -0755 $(GRUB_DEFAULT) $(DESTDIR)$(SYSCONFDIR)/default
+
+	install -dm755 $(DESTDIR)$(SYSCONFDIR)/grub.d
+	install -0755 $(GRUB_D) $(DESTDIR)$(SYSCONFDIR)/grub.d
 
 uninstall:
 	for f in ${BIN}; do rm -f $(DESTDIR)$(PREFIX)/bin/$$f; done
 	for f in ${SHARED}; do rm -f $(DESTDIR)$(PREFIX)/share/manjaro-tools/$$f; done
 	for f in ${LIBS}; do rm -f $(DESTDIR)$(PREFIX)/lib/manjaro-tools/$$f; done
+
+uninstall_portable_efi:
+	for f in ${GRUB_DEFAULT}; do rm -f $(DESTDIR)$(SYSCONFDIR)/default/$$f; done
+	for f in ${GRUB_D}; do rm -f $(DESTDIR)$(SYSCONFDIR)/grub.d/$$f; done
 
 uninstall_rc:
 	for f in ${RC}; do rm -f $(DESTDIR)$(SYSCONFDIR)/init.d/$$f; done
@@ -89,9 +105,9 @@ uninstall_xdg:
 	for f in ${XBIN}; do rm -f $(DESTDIR)$(PREFIX)/bin/$$f; done
 	for f in ${XDG}; do rm -f $(DESTDIR)$(SYSCONFDIR)/skel/.config/autostart/$$f; done
 
-install: install_base install_rc install_sd install_xdg
+install: install_base install_rc install_sd install_xdg install_portable_efi
 
-uninstall: uninstall_base uninstall_rc uninstall_sd uninstall_xdg
+uninstall: uninstall_base uninstall_rc uninstall_sd uninstall_xdg uninstall_portable_efi
 
 dist:
 	git archive --format=tar --prefix=manjaro-tools-livecd-$(Version)/ $(Version) | gzip -9 > manjaro-tools-livecd-$(Version).tar.gz
