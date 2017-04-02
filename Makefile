@@ -86,7 +86,7 @@ install_portable_efi:
 	install -dm755 $(DESTDIR)$(SYSCONFDIR)/grub.d
 	install -0755 $(GRUB_D) $(DESTDIR)$(SYSCONFDIR)/grub.d
 
-uninstall:
+uninstall_base:
 	for f in ${BIN}; do rm -f $(DESTDIR)$(PREFIX)/bin/$$f; done
 	for f in ${SHARED}; do rm -f $(DESTDIR)$(PREFIX)/share/manjaro-tools/$$f; done
 	for f in ${LIBS}; do rm -f $(DESTDIR)$(PREFIX)/lib/manjaro-tools/$$f; done
