@@ -80,11 +80,11 @@ install_xdg:
 	install -m0755 ${XDG} $(DESTDIR)$(SYSCONFDIR)/skel/.config/autostart
 
 install_portable_efi:
-	install -dm755 $(DESTDIR)$(SYSCONFDIR)/default
-	install -0755 $(GRUB_DEFAULT) $(DESTDIR)$(SYSCONFDIR)/default
+	install -dm0755 $(DESTDIR)$(SYSCONFDIR)/default
+	install -m0755 $(GRUB_DEFAULT) $(DESTDIR)$(SYSCONFDIR)/default
 
-	install -dm755 $(DESTDIR)$(SYSCONFDIR)/grub.d
-	install -0755 $(GRUB_D) $(DESTDIR)$(SYSCONFDIR)/grub.d
+	install -dm0755 $(DESTDIR)$(SYSCONFDIR)/grub.d
+	install -m0755 $(GRUB_D) $(DESTDIR)$(SYSCONFDIR)/grub.d
 
 uninstall_base:
 	for f in ${BIN}; do rm -f $(DESTDIR)$(PREFIX)/bin/$$f; done
