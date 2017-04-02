@@ -1,6 +1,6 @@
-# Defaults for grub2-fll-portable-efi update-grub helper
+# Defaults for grub2-portable-efi update-grub helper
 # sourced by grub2's update-grub
-# installed at /etc/default/grub2-fll-portable-efi by the maintainer scripts
+# installed at /etc/default/grub2-portable-efi by the maintainer scripts
 
 #
 # This is a POSIX shell fragment
