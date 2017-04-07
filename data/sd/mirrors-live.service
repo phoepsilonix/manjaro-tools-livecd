@@ -1,5 +1,5 @@
 [Unit]
-Description=LiveMedia Pacman mirrors randomizer script
+Description=LiveMedia Pacman mirror ranking script
 Before=systemd-user-sessions.service
 
 [Service]

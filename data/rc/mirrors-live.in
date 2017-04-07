@@ -2,7 +2,7 @@
 # Copyright 2016 artoo (artoo@manjaro.org)
 # Distributed under the terms of the GNU General Public License v2
 
-description="Pacman mirrors randomizer"
+description="Pacman mirror ranking"
 
 depend() {
 	need net
