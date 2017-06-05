@@ -12,7 +12,7 @@ is_sonar(){
 	fi
 }
 
-if [[ -f /usr/bin/thus ]];then
+if [[ -f /usr/bin/thus ]]; then
 	install -Dm755 $src/thus.desktop \
 	$xdg/thus.desktop
 	if $(is_sonar); then
@@ -20,12 +20,17 @@ if [[ -f /usr/bin/thus ]];then
 	fi
 fi
 
-if [[ -f /usr/bin/calamares ]];then
+if [[ -f /usr/bin/calamares ]]; then
 	install -Dm755 $src/calamares.desktop \
 	$xdg/calamares.desktop
 	if $(is_sonar); then
 		sed -e "s/^.*Name=.*/Name=Install Sonar Linux (Calamares)/" -i $xdg/calamares.desktop
 	fi
+fi
+
+if [[ -f /usr/bin/manjaro-architect ]]; then
+    install -Dm755 $src/manjaro-architect.desktop \
+    $xdg/manjaro-architect.desktop
 fi
 
 if [[ -f "$src/manjaro-documentation.desktop" ]]; then
