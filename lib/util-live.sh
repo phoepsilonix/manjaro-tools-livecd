@@ -265,13 +265,13 @@ configure_language(){
     keytable=$(get_keytable)
     local timezone=$(get_tz)
     # Fallback
-#     [[ -z "${lang}" ]] && lang="en_US"
-#     [[ -z "${keytable}" ]] && keytable="us"
-#     [[ -z "${timezone}" ]] && timezone="Etc/UTC"
+    [[ -z "${lang}" ]] && lang="en_US"
+    [[ -z "${keytable}" ]] && keytable="us"
+    [[ -z "${timezone}" ]] && timezone="Etc/UTC"
 
     sed -e "s/#${lang}.UTF-8/${lang}.UTF-8/" -i /etc/locale.gen
 
-    # 	echo "LANG=${lang}.UTF-8" >> /etc/environment
+    echo "LANG=${lang}.UTF-8" >> /etc/environment
 
     if [[ -d /run/openrc ]]; then
         sed -i "s/keymap=.*/keymap=\"${keytable}\"/" /etc/conf.d/keymaps
