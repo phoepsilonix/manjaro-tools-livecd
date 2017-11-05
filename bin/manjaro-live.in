@@ -23,10 +23,13 @@ CONSOLEMAP="$(kernel_cmdline vconsole.font.map)"
 arch=$(uname -m)
 echo "Got consolefont and arch $arch: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
 
+
+### DECIDE IF WE DON'T NEED IT ###
+# see also https://github.com/calamares/calamares/issues/860
 # Activate swap
-livetimer=$(get_timer_ms)
-configure_swap
-echo "Activated swap and added to fstab: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
+#livetimer=$(get_timer_ms)
+#configure_swap
+#echo "Activated swap and added to fstab: $(elapsed_time_ms ${livetimer})ms" >> /var/log/manjaro-live.log
 
 livetimer=$(get_timer_ms)
 configure_language
