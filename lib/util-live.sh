@@ -322,6 +322,6 @@ configure_user_root(){
 	[[ -f /etc/skel/.extend.bashrc ]] && cp /etc/skel/.extend.bashrc /root/
 	[[ -f /etc/skel/.gtkrc-2.0 ]] && cp /etc/skel/.gtkrc-2.0 /root/
 	if [[ -d /etc/skel/.config ]]; then
-		cp -a /etc/skel/.config /root/
+		cp -an /etc/skel/.config /root/
 	fi
 }
