@@ -31,6 +31,11 @@ fi
 if [[ -f /usr/bin/manjaro-architect ]]; then
     install -Dm755 $src/manjaro-architect.desktop \
     $xdg/manjaro-architect.desktop
+
+    # workaround for mate-terminal; https://github.com/manjaro/desktop-settings/issues/120
+    if [[ $DESKTOP_SESSION == "mate" ]]; then
+        sed -i "s/^Exec.*/Exec=mate-terminal -e 'sudo \/usr\/bin\/setup'/; s/Terminal.*/Terminal=false/" $xdg/manjaro-architect.desktop
+    fi
 fi
 
 if [[ -f "$src/manjaro-documentation.desktop" ]]; then
@@ -49,10 +54,8 @@ if [[ -f "$src/hexchat.desktop" ]]; then
 fi
 
 # workaround for glib trash bug (https://bugzilla.gnome.org/show_bug.cgi?id=748248)
-
 userid=$(id -u $USER)
-
 if [ ! -d "/.Trash-$userid" ]; then
-  sudo mkdir -p /.Trash-$userid/{expunged,files,info}
-  sudo chown -R $userid /.Trash-$userid
+    sudo mkdir -p /.Trash-$userid/{expunged,files,info}
+    sudo chown -R $userid /.Trash-$userid
 fi
