@@ -298,8 +298,7 @@ configure_machine_id(){
 	fi
 	# set unique machine-id
 	echo "Setting machine-id ..." >> /var/log/manjaro-live.log
-	#dbus-uuidgen --ensure=/etc/machine-id
-	systemd-machine-id-setup
+	dbus-uuidgen --ensure=/etc/machine-id
 	ln -sf /etc/machine-id /var/lib/dbus/machine-id
 }
 
