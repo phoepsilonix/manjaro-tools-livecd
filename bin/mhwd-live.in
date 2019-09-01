@@ -5,7 +5,7 @@
 DRIVER="$(kernel_cmdline driver nonfree)"
 VIDEO="$(kernel_cmdline xdriver no)"
 
-REPO_PATH='/opt'
+REPO_PATH='/opt/mhwd'
 PAC_CONF="${REPO_PATH}/pacman-mhwd.conf"
 
 # In a live session we should never have a database lock at boot, this is a bug!
@@ -36,6 +36,5 @@ if [[ -e "${PAC_CONF}" ]]; then
     else
         mhwd --auto pci ${DRIVER} 0300 --pmconfig "${PAC_CONF}" >> /var/log/mhwd-live.log
     fi
+    echo "MHWD DONE" >> /var/log/mhwd-live.log
 fi
-
-echo "MHWD DONE" >> /var/log/mhwd-live.log
