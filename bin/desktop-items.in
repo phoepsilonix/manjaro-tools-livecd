@@ -3,23 +3,6 @@
 xdg=$(xdg-user-dir DESKTOP)
 src='/usr/share/applications'
 
-is_sonar(){
-	. /etc/os-release
-	if [[ $NAME == "Sonar Linux" ]]; then
-		return 0
-	else
-		return 1
-	fi
-}
-
-if [[ -f /usr/bin/thus ]]; then
-	install -Dm755 $src/thus.desktop \
-	$xdg/thus.desktop
-	if $(is_sonar); then
-		sed -e "s/^.*Name=.*/Name=Install Sonar Linux/" -i $xdg/thus.desktop
-	fi
-fi
-
 if [[ -f /usr/bin/calamares ]]; then
 	install -Dm755 $src/calamares.desktop \
 	$xdg/calamares.desktop
@@ -41,11 +24,6 @@ fi
 if [[ -f "$src/manjaro-documentation.desktop" ]]; then
 	install -Dm755 $src/manjaro-documentation.desktop \
 	"$xdg/manjaro-documentation.desktop"
-fi
-
-if [[ -f "$src/manjaro-welcome.desktop" ]]; then
-	install -Dm755 $src/manjaro-welcome.desktop \
-	"$xdg/manjaro-welcome.desktop"
 fi
 
 if [[ -f "$src/hexchat.desktop" ]]; then
