@@ -188,7 +188,7 @@ configure_displaymanager(){
 }
 
 gen_pw(){
-	echo $(perl -e 'print crypt($ARGV[0], "password")' ${password})
+	echo $(openssl passwd -6 ${password})
 }
 
 configure_user(){
