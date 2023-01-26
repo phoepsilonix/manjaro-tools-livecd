@@ -6,6 +6,7 @@ description="Pacman mirror ranking"
 
 depend() {
 	need net
+    before pacman-init
 }
 
 start() {

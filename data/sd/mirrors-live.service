@@ -1,6 +1,7 @@
 [Unit]
 Description=LiveMedia Pacman mirror ranking script
 Before=systemd-user-sessions.service
+Before=pacman-init.service
 
 [Service]
 Type=oneshot

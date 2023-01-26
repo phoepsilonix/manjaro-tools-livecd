@@ -2,6 +2,7 @@
 Description=LiveMedia Pacman mirrors ranking script
 Wants=network-online.target
 After=network-online.target
+Before=pacman-init.service
 
 [Service]
 Type=oneshot
